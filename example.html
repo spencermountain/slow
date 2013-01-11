@@ -1,0 +1,35 @@
+
+<html>
+<head>
+  <script src="./rate_limit.js"></script>
+  <script src="http://code.jquery.com/jquery-latest.js"></script>
+  <script src="https://raw.github.com/caolan/async/master/lib/async.js"></script>
+	<script>
+	$(document).ready(function(){
+
+    var options={
+      each_time:function(r){console.log(r)},
+      max:3
+    }
+
+    rate_limit( [1,2,3,4,5,6,7], my_function, options, function(r){
+      $("#result").html(r.join('<br/>'))
+    })
+
+    function my_function(q, callback){
+      var x=Math.floor(Math.random()*2000)
+      setTimeout(function(){callback("finished "+q+" in "+x+"ms")}, x)
+    }
+
+
+	});
+	</script>
+</head>
+<body>
+  <h2> Rate-limiting async requests to 5 at a time</h2>
+
+	  <span id="result"><img src="http://acre.freebase.com/api/trans/raw/guid/9202a8c04000641f800000000abf4b47"></span>
+
+  <ul>rate_limit( [1,2,3,4,5,6,7], my_function, options, callback)</ul>
+</body>
+</html>

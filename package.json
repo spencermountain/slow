@@ -1,20 +1,18 @@
 {
   "author": "Spencer Kelly <spencerwater@gmail.com> (http://spencermounta.in)",
-  "name": "spam_nice",
-  "description": "a more polite way to poll someone's server",
-  "version": "0.0.2",
+  "name": "rate_limit",
+  "description": "keep your player-ass async requests under control",
+  "version": "0.0.3",
   "repository": {
     "type": "git",
     "url": "https://github.com/spencermountain/spam-nice.git"
   },
-  "main": "spamnice.js",
+  "main": "rate_limit.js",
   "engines" : ["node >= 0.3.6"],
   "dependencies": {
-    "request": "1.9.5",
     "async":"0.1.22"
   },
   "devDependencies": {
-    "request": "1.9.5",
     "async":"0.1.22"
   }
 }
