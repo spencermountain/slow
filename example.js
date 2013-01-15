@@ -1,6 +1,10 @@
-var rate_limit=require('./rate_limit').rate_limit;
+var slow=require('./slow');
 
-rate_limit( [1,2,3,4,5,6,7], my_function, {}, console.log)
+
+//slow.in_bits( [1,2,3,4,5,6,7], my_function, {}, console.log)
+slow.per_minute( [1,2,3,4,5,6,7], my_function, {per_minute:1, each_time:function(){console.log('hi')}}, console.log)
+
+
 
 function my_function(q, callback){
   var x=Math.floor(Math.random()*4000)

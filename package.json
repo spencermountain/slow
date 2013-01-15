@@ -1,13 +1,13 @@
 {
   "author": "Spencer Kelly <spencerwater@gmail.com> (http://spencermounta.in)",
-  "name": "rate_limit",
-  "description": "keep your player-ass async requests under control",
-  "version": "0.0.3",
+  "name": "slow",
+  "description": "keep your pants on, async requests",
+  "version": "0.0.4",
   "repository": {
     "type": "git",
-    "url": "https://github.com/spencermountain/spam-nice.git"
+    "url": "https://github.com/spencermountain/slow.git"
   },
-  "main": "rate_limit.js",
+  "main": "slow.js",
   "engines" : ["node >= 0.3.6"],
   "dependencies": {
     "async":"0.1.22"
@@ -16,5 +16,3 @@
     "async":"0.1.22"
   }
 }
-
-
