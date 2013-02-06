@@ -1,33 +1,3 @@
-//var async = require('async');
-// exports.in_bits=function(arr, fn, options, done) {
-//     this.docs="handle rate-limited asynchronous freebase calls with a ending callback"
-//     var async_max=options.max||5;
-//     done=done||console.log
-//     //wrap them all in functions
-//     var function_list = arr.map(function(r,i) {
-//       return function(callback) {
-//         fn(r, function(r) {
-//           if(options.each_time){
-//             options.each_time(r, i)
-//           }
-//           callback(null, r);
-//         })
-//       }
-//     })
-//     //groups of async tasks in a synchonous task
-//     var all = groups_of(function_list, async_max).map(function(f_group) {
-//       return function(callback) {
-//         async.parallel(f_group, callback);
-//       }
-//     })
-//     async.series(all, function(err, result) {
-//       //flatten it one level
-//       result=result.reduce(function(a, b) {
-//           return a.concat(b);
-//       });
-//       done(result)
-//     });
-//   }
 
 exports.per_minute=function(arr, fn, options, done){
   this.docs="explicitly set a pace"
@@ -63,11 +33,11 @@ exports.flow=function(arr, fn, options, done){
   function iterate(){
     f.sent++;
     f.out++;
-    console.log('send '+(f.sent-1))
+    //console.log('send '+(f.sent-1))
     fn(arr[f.sent-1],function(r){
       f.out--;
       f.results.push(r);
-      console.log('=back=='+f.results.length + ' ==')
+      //console.log('=back=='+f.results.length + ' ==')
       if(options.each_time){
         options.each_time(r)
       }
@@ -75,7 +45,7 @@ exports.flow=function(arr, fn, options, done){
         iterate()
       }else{
         if(f.results.length<arr.length){
-          console.log('don\'t kill')
+          //console.log('don\'t kill')
         }else{
           done(f.results)
         }
@@ -100,7 +70,7 @@ exports.serial=function(arr, fn, options, done){
 
 
 exports.in_bits2=function(arr, fn, options, done) {
-    this.docs="handle rate-limited asynchronous freebase calls with a ending callback"
+    this.docs="process the data in bunches, ending callback"
     options=options||{}
     options.max=options.max||5;
     done=done||console.log;
@@ -110,11 +80,13 @@ exports.in_bits2=function(arr, fn, options, done) {
     this.one=function(r, callback){
       console.log(r)
       console.log('===========')
-      exports.flow(r, fn, options, callback)
+      exports.flow(r, fn, {max:2}, function(d){
+        callback('s')
+      })
     }
-    exports.serial(this.all, this.one, options, done)
+    exports.flow(this.all, this.one, {max:1}, done)
 }
- //exports.in_bits2( [1,2,3,4,5,6,7], my_function, {max:3})
+//exports.in_bits2( [1,2,3,4,5,6,7], my_function, {max:3})
 
   //turn an array into smaller groups of arrays
   function groups_of(arr, group_length) {
@@ -128,8 +100,6 @@ exports.in_bits2=function(arr, fn, options, done) {
     }
     return all
   }
-
-
 
 
 function my_function(q, callback){
