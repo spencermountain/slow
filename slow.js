@@ -4,15 +4,6 @@ max=200
 
 var arr=[1,2,3,4,5,6,7,8,9,10];
 
-//http://www.wolframalpha.com/input/?i=average+walking+speed
-//slow.breath //2500
-//slow.walk //100pm   //600ms
-//slow.jog  //180pm  //300ms
-//slow.run  //180pm  //200ms
-//slow.heartrate //72bpm
-
-//slow.pace
-
 exports.pace=function(arr, doit, options, done){
   this.aliases=["rate","speed"]
   this.doc="explicitly decide the speed, with an optional maximum limit for safety"
@@ -78,14 +69,32 @@ exports.pace=function(arr, doit, options, done){
         })
      })()
   }
-
   options.rate=bpm_to_ms(options.rate);
-  console.log(options)
   var loop = setInterval(iterate, options.rate);
 }
-exports.pace(arr,my_function,{rate:"250bpm"})
+//exports.pace(arr,my_function,{rate:"250bpm"})
 
-
+exports.heartbeat=function(arr, doit, options, done){
+  options=options||{}
+  options.rate=options.rate||"72bpm";
+  exports.pace(arr, doit, options, done);
+}
+exports.walk=function(arr, doit, options, done){
+  options=options||{}
+  options.rate=options.rate||"120bpm";
+  exports.pace(arr, doit, options, done);
+}
+exports.run=function(arr, doit, options, done){
+  options=options||{}
+  options.rate=options.rate||"180bpm";
+  exports.pace(arr, doit, options, done);
+}
+exports.jog=function(arr, doit, options, done){
+  options=options||{}
+  options.rate=options.rate||"150bpm";
+  exports.pace(arr, doit, options, done);
+}
+//exports.walk(arr,my_function)
 
 function bpm_to_ms(bpm){
   var bps=Math.abs(bpm/60)||1
@@ -115,40 +124,37 @@ exports.steady=function(arr, doit, options, done){
     return done(result);
   })
 }
-//exports.flow(arr, my_function,  console.log)
 
-
-exports.patient=function(arr, fn, options, done){
-  this.docs="do only one call at a time";
-  this.aliases=["serial","one_at_a_time","in_serial"]
-  if(typeof options=="function"){done=options;options={};}//flexible callback parameter
+exports.patient=function(arr, doit, options, done){
   options=options||{}
   options.max=options.max||1;
-  exports.steady(arr,fn,options,done)
+  exports.steady(arr,doit,options,done)
 }
-//exports.patient(arr, my_function, {}, console.log)
-
+exports.handful=function(arr, doit, options, done){
+  options=options||{}
+  options.max=options.max||3;
+  exports.steady(arr,doit,options,done)
+}
+exports.pocket=function(arr, doit, options, done){
+  options=options||{}
+  options.max=options.max||7;
+  exports.steady(arr,doit,options,done)
+}
+exports.backpack=function(arr, doit, options, done){
+  options=options||{}
+  options.max=options.max||15;
+  exports.steady(arr,doit,options,done)
+}
+exports.shovel=function(arr, doit, options, done){
+  options=options||{}
+  options.max=options.max||35;
+  exports.steady(arr,doit,options,done)
+}
+//exports.handful(arr,my_function)
 
 function my_function(q, callback){
   at_once++;
-  //console.log(at_once+" AT ONCE")
+  console.log(at_once+" at once")
   var x=Math.floor(Math.random()*4000)
   setTimeout(function(){callback("finished "+q+" in "+x+"ms")}, x)
 }
-
-// var settle_params=function(params,method,defaults){
-//   var o={
-//     valid:false,
-//     q:params[0],
-//     options:params[1] || {},
-//     callback:params[2] || console.log,
-//     defaults:defaults || {},
-//     method:method||''
-//   }
-//    //flexible parameters
-//   if(typeof o.options=="function"){
-//     o.callback=o.options;
-//     o.options={};
-//   }
-//   return o
-// }
