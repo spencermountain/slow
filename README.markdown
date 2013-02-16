@@ -13,13 +13,13 @@ it goes:
         setTimeout(callbck(i), Math.random()*4000); //randomly delay the callback
       }
 
-unlike the [woderful](https://raw.github.com/caolan/async) async libraries, this one helps you set the pace, so you don't immediately fall-over. you can be safe with memory and respect external services.
+unlike the [woderful](https://raw.github.com/caolan/async) [async](https://github.com/kriszyp/node-promise) [libraries](http://tamejs.org), this one helps you set the pace, so you don't immediately fall-over. you can be safe with memory and respect external services.
 
 #the methods are:
-*slow.walk(arr, fn, [options], callback)
-*slow.jog(arr, options, [fn], callback)
+*slow.walk(arr, fn, [options], callback) //[120bpm](http://www.wolframalpha.com/input/?i=average+walking+pace)
+*slow.jog(arr, fn, [options], callback)//150bpm
+*slow.run(arr, fn, [options], callback)//180bpm
 *slow.heartbeat(arr, fn, [options], callback)//72bpm
-*slow.run(arr, fn, [options], callback)
 //these methods let you explicitly set a pace, but respect a maximum current request rate (defaults to 10)
 (it begins at this pace, but slows it down if callbacks begin to build-up)
 
@@ -34,9 +34,17 @@ unlike the [woderful](https://raw.github.com/caolan/async) async libraries, this
 *slow.backpack()//max=15
 *slow.shovel()//max=35
 
+the options are:
+    {
+      __debug__: true, //understand when the requests are being fired
+      __verbose__: true, //include the input in the results
+      __monitor__: function(r){console.log(r.length)}, //watch the results coming in in real-time
+      __max__: 10 //the most number of concurrent requests you're comfortable making
+    }
+you can just ignore that tho
+
 ##browser
     <script src="./slow.js"></script>
-    <script src="https://raw.github.com/caolan/async/master/lib/async.js"></script>
     <script>
       slow.walk( [1,2,3,4,5,6,7], my_function, {max:3}, function(r){
         alert(r.join(', '))

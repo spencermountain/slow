@@ -2,7 +2,7 @@
   "author": "Spencer Kelly <spencerwater@gmail.com> (http://spencermounta.in)",
   "name": "slow",
   "description": "keep your pants on, async requests",
-  "version": "0.1.0",
+  "version": "0.0.7",
   "repository": {
     "type": "git",
     "url": "https://github.com/spencermountain/slow.git"
@@ -10,6 +10,5 @@
   "main": "slow.js",
   "engines" : ["node >= 0.3.6"],
   "dependencies": {
-    "async": "0.2.3"
   }
 }
