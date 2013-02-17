@@ -10,9 +10,9 @@ it goes,
 
 ```javascript
 slow=require('slow');
-slow.walk( [1,2,3,4], whatev, console.log);//results, in order
-//randomly delay a callback
-function whatev(i, callback){
+slow.walk( [1,2,3,4], random_wait, console.log);//results, in order
+
+function random_wait(i, callback){
   setTimeout(callbck(i), Math.random()*4000);
 }
 ```
