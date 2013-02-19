@@ -1,6 +1,7 @@
 var slow=(function(){
     var slow={};
     var arr=[1,2,3,4,5,6,7,8,9,10];
+
     slow.steady=function(arr, doit, options, done){
       this.aliases=["rate","speed"]
       this.doc="explicitly decide the speed, with an optional maximum limit for safety"
@@ -18,19 +19,45 @@ var slow=(function(){
         options.monitor=false;
       }
       if(typeof options.rate=="string"){
+      //normalise everthing to bpm
         //convert bpm
         if(options.rate.match(/bpm$/i)){
           options.rate=parseInt(options.rate.replace(/bpm/i,''))||60;
         }
+        //(per minute)
+        else if(options.rate.match(/ ?(per )?min(ute)?$/i)){
+          options.rate=parseInt(options.rate.replace(/ ?(per )?min(ute)?$/i,''))||60;
+        }
+       //(per hour)
+        else if(options.rate.match(/ ?(per )?hour(ly)?$/i)){
+          options.rate=parseInt(options.rate.replace(/ ?(per )?hour(ly)?$/i,''))||180;
+          options.rate=options.rate/60;
+        }
+        //(per day)
+        else if(options.rate.match(/ ?(per )?day$/i)){
+          options.rate=parseInt(options.rate.replace(/ ?(per )?day$/i,''))||24;
+          options.rate=options.rate/60/60;
+        }
         //convert hertz
-        else if(options.rate.match(/he?rtz$/i)){
-          options.rate=parseInt(options.rate.replace(/he?r?t?z$/i,''));
+        else if(options.rate.match(/ ?he?rtz$/i)){
+          options.rate=parseInt(options.rate.replace(/ ?he?r?t?z$/i,''));
+          options.rate=Math.abs(options.rate*60)||60;
+        }
+       //(per second)
+        else if(options.rate.match(/ ?(per )?sec(ond)?$/i)){
+          options.rate=parseInt(options.rate.replace(/ ?(per )?sec(ond)?$/i,''))||60;
           options.rate=Math.abs(options.rate*60)||60;
         }
         //convert ms
-        else if(options.rate.match(/ms$/i)){
-          options.rate=parseInt(options.rate.replace(/ms$/i,''));
+        else if(options.rate.match(/ ?ms$/i)){
+          options.rate=parseInt(options.rate.replace(/ ?ms$/i,''));
           options.rate=Math.abs(options.rate/60) || 60;
+        }
+        if(options.rate=="daily"){
+          options.rate=86400000
+        }
+        if(options.rate=="hourly"){
+          options.rate=3600000
         }
         options.rate=parseInt(options.rate);
       }
@@ -81,7 +108,7 @@ var slow=(function(){
       options.rate=bpm_to_ms(options.rate);
       var loop = setInterval(iterate, options.rate);
     }
-    //slow.steady(arr,my_function,{rate:"250bpm"})
+    //slow.steady(arr,my_function,{debug:true, rate:"86400 per day"})
 
     slow.heartbeat=function(arr, doit, options, done){
       options=options||{}
@@ -103,6 +130,29 @@ var slow=(function(){
       options.rate=options.rate||"150bpm";
       slow.steady(arr, doit, options, done);
     }
+
+
+    slow.crawl=function(arr, doit, options, done){
+      options=options||{}
+      options.rate=options.rate||"70bpm";
+      slow.steady(arr, doit, options, done);
+    }
+   slow.minutely=function(arr, doit, options, done){
+      options=options||{}
+      options.rate=options.rate||"1 per minute";
+      slow.steady(arr, doit, options, done);
+    }
+    slow.hourly=function(arr, doit, options, done){
+      options=options||{}
+      options.rate=options.rate||"1 per hour";
+      slow.steady(arr, doit, options, done);
+    }
+   slow.daily=function(arr, doit, options, done){
+      options=options||{}
+      options.rate=options.rate||"1 per day";
+      slow.steady(arr, doit, options, done);
+    }
+
     //slow.walk(arr,my_function)
 
     function bpm_to_ms(bpm){
