@@ -98,7 +98,7 @@ var slow=(function(){
             if(options.debug){console.log('sending# '+spot+' - ('+current+' going at once)');}
             doit(arr[i],function(r){
              if(options.monitor){
-                options.monitor(r);
+                options.monitor(r, spot);
               }
               current-=1;
               all[spot]=r;
@@ -193,7 +193,7 @@ var slow=(function(){
           }
           fn(arr[i],function(result){
             if(options.monitor){
-              options.monitor(result);
+              options.monitor(result, spot);
             }
             at_once-=1;
             all[spot]=result;
@@ -221,6 +221,11 @@ var slow=(function(){
 
 
     slow.patient=function(arr, doit, options, done){
+      options=options||{}
+      options.max=options.max||1;
+      slow.pace(arr,doit,options,done)
+    }
+   slow.serial=function(arr, doit, options, done){
       options=options||{}
       options.max=options.max||1;
       slow.pace(arr,doit,options,done)
