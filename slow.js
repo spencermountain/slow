@@ -262,11 +262,6 @@ var slow=(function(){
       })
     }
 
-    function my_function(q, callback){
-      var x=Math.floor(Math.random()*4000)
-      setTimeout(function(){callback("finished "+q+" in "+x+"ms")}, x)
-    }
-
 
 //export the module
     // AMD / RequireJS
@@ -282,3 +277,30 @@ var slow=(function(){
 
     return slow;
 })()
+
+
+
+///////////Dirty stuff
+Object.defineProperty(Array.prototype, 'slow', {
+  value: function(fn, options, callback){
+          slow.pace(this,fn,options,callback)
+         }
+})
+
+Object.defineProperty(Array.prototype, 'walk', {
+  value: function(fn, options, callback){
+          slow.walk(this,fn,options,callback)
+         }
+})
+
+
+//  r=[1,2,3,4,5,6,7]
+//  for(var i in r){
+//   console.log(i)
+//  }
+// r.slow(my_function)
+
+     function my_function(q, callback){
+      var x=Math.floor(Math.random()*4000)
+      setTimeout(function(){callback("finished "+q+" in "+x+"ms")}, x)
+    }
