@@ -218,39 +218,28 @@ var slow=(function(){
     }
     //slow.pace(arr,my_function,{debug:false, verbose:false, monitor:false, max:3},console.log)
 
+var pace_methods={
+  patient:1,
+  serial:1,
+  handful:3,
+  pocket:7,
+  backpack:15,
+  shovel:35
+}
+Object.keys(pace_methods).map(function(i){
+  slow[i]=function(arr, doit, options, done){
+      options=options||{}
+      options.max=options.max||pace_methods[i];
+      slow.pace(arr,doit,options,done)
+    }
 
+    Object.defineProperty(Array.prototype, i, {
+      value: pace_methods[i],
+      configurable: true,
+      enumerable: false
+    })
 
-    slow.patient=function(arr, doit, options, done){
-      options=options||{}
-      options.max=options.max||1;
-      slow.pace(arr,doit,options,done)
-    }
-   slow.serial=function(arr, doit, options, done){
-      options=options||{}
-      options.max=options.max||1;
-      slow.pace(arr,doit,options,done)
-    }
-    slow.handful=function(arr, doit, options, done){
-      options=options||{}
-      options.max=options.max||3;
-      slow.pace(arr,doit,options,done)
-    }
-    slow.pocket=function(arr, doit, options, done){
-      options=options||{}
-      options.max=options.max||7;
-      slow.pace(arr,doit,options,done)
-    }
-    slow.backpack=function(arr, doit, options, done){
-      options=options||{}
-      options.max=options.max||15;
-      slow.pace(arr,doit,options,done)
-    }
-    slow.shovel=function(arr, doit, options, done){
-      options=options||{}
-      options.max=options.max||35;
-      slow.pace(arr,doit,options,done)
-    }
-    //slow.handful(arr,my_function)
+})
 
 
     function make_verbose(arr, result){
@@ -293,6 +282,11 @@ Object.defineProperty(Array.prototype, 'walk', {
          }
 })
 
+Object.defineProperty(Array.prototype, 'patient', {
+  value: function(fn, options, callback){
+          slow.patient(this,fn,options,callback)
+         }
+})
 
 //  r=[1,2,3,4,5,6,7]
 //  for(var i in r){
