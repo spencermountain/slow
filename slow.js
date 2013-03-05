@@ -110,55 +110,40 @@ var slow=(function(){
     }
     //slow.steady(arr,my_function,{debug:true, rate:"86400 per day"})
 
-    slow.heartbeat=function(arr, doit, options, done){
-      options=options||{}
-      options.rate=options.rate||"72bpm";
-      slow.steady(arr, doit, options, done);
-    }
-    slow.walk=function(arr, doit, options, done){
-      options=options||{}
-      options.rate=options.rate||"120bpm";
-      slow.steady(arr, doit, options, done);
-    }
-    slow.run=function(arr, doit, options, done){
-      options=options||{}
-      options.rate=options.rate||"180bpm";
-      slow.steady(arr, doit, options, done);
-    }
-    slow.jog=function(arr, doit, options, done){
-      options=options||{}
-      options.rate=options.rate||"150bpm";
-      slow.steady(arr, doit, options, done);
-    }
-
-
-    slow.crawl=function(arr, doit, options, done){
-      options=options||{}
-      options.rate=options.rate||"70bpm";
-      slow.steady(arr, doit, options, done);
-    }
-   slow.minutely=function(arr, doit, options, done){
-      options=options||{}
-      options.rate=options.rate||"1 per minute";
-      slow.steady(arr, doit, options, done);
-    }
-    slow.hourly=function(arr, doit, options, done){
-      options=options||{}
-      options.rate=options.rate||"1 per hour";
-      slow.steady(arr, doit, options, done);
-    }
-   slow.daily=function(arr, doit, options, done){
-      options=options||{}
-      options.rate=options.rate||"1 per day";
-      slow.steady(arr, doit, options, done);
-    }
-
-    //slow.walk(arr,my_function)
-
     function bpm_to_ms(bpm){
       var bps=Math.abs(bpm/60)||1
       return parseInt(1000/bps)
     }
+
+var steady_methods={
+  heartbeat:"72bpm",
+  walk:"120bpm",
+  run:"180bpm",
+  jog:"150bpm",
+  crawl:"70bpm",
+  minutely:"1 per minute",
+  hourly:"1 per hour",
+  daily:"1 per day"
+}
+
+Object.keys(steady_methods).map(function(i){
+  slow[i]=function(arr, doit, options, done){
+      options=options||{}
+      options.max=options.max||steady_methods[i];
+      slow.steady(arr,doit,options,done)
+    }
+    Object.defineProperty(Array.prototype, i, {
+      value: function(doit,options,done){
+        slow[i](this,doit,options,done);
+      },
+      configurable: true,
+      enumerable: false
+    })
+})
+ //  r=[1,2,3,4,5,6,7]
+ // r.jog(my_function)
+
+
 
 
     ///////////////////////////////
@@ -232,9 +217,10 @@ Object.keys(pace_methods).map(function(i){
       options.max=options.max||pace_methods[i];
       slow.pace(arr,doit,options,done)
     }
-
     Object.defineProperty(Array.prototype, i, {
-      value: pace_methods[i],
+      value: function(doit,options,done){
+        slow[i](this,doit,options,done)
+      },
       configurable: true,
       enumerable: false
     })
@@ -270,29 +256,28 @@ Object.keys(pace_methods).map(function(i){
 
 
 ///////////Dirty stuff
-Object.defineProperty(Array.prototype, 'slow', {
-  value: function(fn, options, callback){
-          slow.pace(this,fn,options,callback)
-         }
-})
+// Object.defineProperty(Array.prototype, 'slow', {
+//   value: function(fn, options, callback){
+//           slow.pace(this,fn,options,callback)
+//          }
+// })
 
-Object.defineProperty(Array.prototype, 'walk', {
-  value: function(fn, options, callback){
-          slow.walk(this,fn,options,callback)
-         }
-})
+// Object.defineProperty(Array.prototype, 'walk', {
+//   value: function(fn, options, callback){
+//           slow.walk(this,fn,options,callback)
+//          }
+// })
 
-Object.defineProperty(Array.prototype, 'patient', {
-  value: function(fn, options, callback){
-          slow.patient(this,fn,options,callback)
-         }
-})
+// Object.defineProperty(Array.prototype, 'patient', {
+//   value: function(fn, options, callback){
+//           slow.patient(this,fn,options,callback)
+//          }
+// })
 
-//  r=[1,2,3,4,5,6,7]
+
 //  for(var i in r){
 //   console.log(i)
 //  }
-// r.slow(my_function)
 
      function my_function(q, callback){
       var x=Math.floor(Math.random()*4000)
