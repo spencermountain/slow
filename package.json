@@ -2,7 +2,7 @@
   "author": "Spencer Kelly <spencerwater@gmail.com> (http://spencermounta.in)",
   "name": "slow",
   "description": "keep your pants on, async requests",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "repository": {
     "type": "git",
     "url": "https://github.com/spencermountain/slow.git"
