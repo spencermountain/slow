@@ -1,5 +1,5 @@
 #Keep your pants on, javascript.
-###don't __blow your stack__, or over-async a nice web service.
+### don't __blow the stack__, or over-async a nice web service.
 
 __slow is smooth, smooth is fast.__
 
@@ -22,12 +22,12 @@ this one lets you set the pace.
 
 so you don't _immediately do everything_ at once.
 
-###like some fool.
+### like some fool.
 
 you can be safe with memory and respect external services.
-#the methods are:
+# the methods are:
 
-##rate-limited
+## rate-limited
 _explicitly set a pace, but respect a maximum current request rate (defaults to 10)_
 
 _(it begins at this pace, but slows it down if callbacks begin to build-up)_
@@ -39,7 +39,7 @@ _(it begins at this pace, but slows it down if callbacks begin to build-up)_
 * __slow.heartbeat__ ( _arr, fn, [options], callback_ ) _//72bpm_
 
 
-##count-limited
+## count-limited
 _do only a few things at a time._
 _(only go as fast as your callback does)_
 
@@ -49,7 +49,7 @@ _(only go as fast as your callback does)_
 * __slow.backpack__ ( _arr, fn, [options], callback_ ) _//max=15_
 * __slow.shovel__ ( _arr, fn, [options], callback_ ) _//max=35_
 
-##the _options_ are:
+## the _options_ are:
 ```javascript
 {
  debug: true, //understand when the requests are being fired
@@ -60,7 +60,7 @@ _(only go as fast as your callback does)_
 ```
 but you can just ignore those tho
 
-##in the f-ing Browzers!1
+## in the Browzers!
 (2.8k)
 ```html
 <script src="https://raw.github.com/spencermountain/slow/master/slow.min.js"></script>
@@ -74,7 +74,8 @@ but you can just ignore those tho
   }
 </script>
 ```
-##what about my craziness..
+
+## what about my craziness..
 if you're in a situation that needs fancy paramaters, wrap them up like this:
 ```javascript
 slow.steady( [1,2,3,4], whatev, console.log);
@@ -92,5 +93,5 @@ function whatev(i, callback){
 }
 ```
 
-## boogers
+## license
 MIT

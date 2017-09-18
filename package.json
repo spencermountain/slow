@@ -1,14 +1,21 @@
 {
   "author": "Spencer Kelly <spencerwater@gmail.com> (http://spencermounta.in)",
   "name": "slow",
-  "description": "keep your pants on, async requests",
-  "version": "0.0.10",
+  "description": "slow is smooth, smooth is fast",
+  "version": "0.0.12",
+  "scripts": {
+    "test": "\"node_modules/.bin/tape\" \"./tests/**/*.test.js\" | \"node_modules/.bin/tap-spec\" --color"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/spencermountain/slow.git"
   },
-  "main": "slow.js",
-  "engines" : ["node >= 0.3.6"],
-  "dependencies": {
-  }
+  "main": "./src/slow.js",
+  "engines": ["node >= 0.3.6"],
+  "dependencies": {},
+  "devDependencies": {
+    "tap-spec": "^4.1.1",
+    "tape": "^4.8.0"
+  },
+  "license": "MIT"
 }
