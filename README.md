@@ -1,5 +1,5 @@
-#Keep your pants on, javascript.
-### don't __blow the stack__, or over-async a nice web service.
+# Keep your pants on, javascript.
+don't __blow the stack__, or over-async a nice web service.
 
 __slow is smooth, smooth is fast.__
 
@@ -17,7 +17,7 @@ function random_wait(i, callback){
 }
 ```
 
-unlike the ___[other](https://github.com/tatumizer/mesh) [woderful](https://raw.github.com/caolan/async) [async](https://github.com/kriszyp/node-promise) [libraries](http://tamejs.org)___,
+unlike the [other](https://github.com/tatumizer/mesh) [woderful](https://raw.github.com/caolan/async) [async](https://github.com/kriszyp/node-promise) [libraries](http://tamejs.org),
 this one lets you set the pace.
 
 so you don't _immediately do everything_ at once.

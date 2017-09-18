@@ -2,7 +2,7 @@
   "author": "Spencer Kelly <spencerwater@gmail.com> (http://spencermounta.in)",
   "name": "slow",
   "description": "slow is smooth, smooth is fast",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "scripts": {
     "test": "\"node_modules/.bin/tape\" \"./tests/**/*.test.js\" | \"node_modules/.bin/tap-spec\" --color"
   },
