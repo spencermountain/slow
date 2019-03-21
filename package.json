@@ -1,21 +1,31 @@
 {
-  "author": "Spencer Kelly <spencerwater@gmail.com> (http://spencermounta.in)",
+  "author": "Spencer Kelly (spencermountain)",
   "name": "slow",
-  "description": "slow is smooth, smooth is fast",
-  "version": "0.0.13",
+  "main": "builds/somehow.js",
+  "unpkg": "builds/somehow.min.js",
+  "description": "rate-limit an async function",
+  "version": "1.0.0",
   "scripts": {
-    "test": "\"node_modules/.bin/tape\" \"./tests/**/*.test.js\" | \"node_modules/.bin/tap-spec\" --color"
+    "watch": "amble ./scratch.js",
+    "build": "node ./scripts/build.js"
   },
+  "files": [
+    "builds"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/spencermountain/slow.git"
   },
-  "main": "./src/slow.js",
-  "engines": ["node >= 0.3.6"],
   "dependencies": {},
   "devDependencies": {
-    "tap-spec": "^4.1.1",
-    "tape": "^4.8.0"
+    "@babel/core": "7.3.4",
+    "@babel/preset-env": "7.3.4",
+    "amble": "0.0.7",
+    "babelify": "10.0.0",
+    "browserify": "^16.2.3",
+    "derequire": "2.0.6",
+    "shelljs": "0.8.3",
+    "terser": "3.16.1"
   },
   "license": "MIT"
 }
