@@ -53,13 +53,9 @@ one bad async call will not throw the whole operation, either.
 
 ```html
 <script src="https://unpkg.com/slow"></script>
-<script>
-  let urls = [
-    'https://en.wikipedia.org/wiki/New_York_Yankees',
-    'https://en.wikipedia.org/wiki/Toronto_Blue_Jays',
-    'https://en.wikipedia.org/wiki/Boston_Red_Sox'
-  ]
-  slow(urls, fetch).then(pages => {
+<script defer>
+  let urls = ['New_York_Yankees', 'Toronto_Blue_Jays', 'Boston_Red_Sox']
+  slow.walk(urls, fetch).then(pages => {
     console.log(pages)
   })
 </script>

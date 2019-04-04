@@ -1,10 +1,10 @@
 {
   "author": "Spencer Kelly (spencermountain)",
   "name": "slow",
-  "main": "builds/somehow.js",
-  "unpkg": "builds/somehow.min.js",
+  "main": "builds/slow.js",
+  "unpkg": "builds/slow.min.js",
   "description": "rate-limit an async function",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "scripts": {
     "test": "tape ./tests/*.test.js | tap-dancer",
     "watch": "amble ./scratch.js",

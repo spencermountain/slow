@@ -1,4 +1,4 @@
-/* slow v1.0.0
+/* slow v1.0.1
    github.com/spencermountain/slow
    MIT
 */
