@@ -1,97 +1,69 @@
-# Keep your pants on, javascript.
-don't __blow the stack__, or over-async a nice web service.
+<div align="center">
+  <img src="https://cloud.githubusercontent.com/assets/399657/23590290/ede73772-01aa-11e7-8915-181ef21027bc.png" />
+  <div>keep your pants on, javascript</div>
+  <a href="https://npmjs.org/package/slow">
+    <img src="https://img.shields.io/npm/v/slow.svg?style=flat-square" />
+  </a>
+  <div>
+    <code>npm install slow</code>
+  </div>
+</div>
 
-__slow is smooth, smooth is fast.__
+A simple library to let you run a function in parallel, but without going too-fast.
 
+Give it `an array` as input, and `a function` that returns a Promise.
 
-it goes,
+it tells you when it's done.
 
-     npm install slow
+useful for courteous use of a web-service, or avoiding a blown-stack.
 
-```javascript
-slow=require('slow');
-slow.walk( [1,2,3,4], random_wait, console.log);//results, in order
+```js
+const slow = require('slow')
 
-function random_wait(i, callback){
-  setTimeout(callbck(i), Math.random()*4000);
-}
-```
-
-unlike the [other](https://github.com/tatumizer/mesh) [woderful](https://raw.github.com/caolan/async) [async](https://github.com/kriszyp/node-promise) [libraries](http://tamejs.org),
-this one lets you set the pace.
-
-so you don't _immediately do everything_ at once.
-
-### like some fool.
-
-you can be safe with memory and respect external services.
-# the methods are:
-
-## rate-limited
-_explicitly set a pace, but respect a maximum current request rate (defaults to 10)_
-
-_(it begins at this pace, but slows it down if callbacks begin to build-up)_
-
-* __slow.pace__ ( _arr, fn, [options], callback_ ) _//60bpm_
-* __slow.walk__ ( _arr, fn, [options], callback_ ) _//[120bpm](http://www.wolframalpha.com/input/?i=average+walking+pace)_
-* __slow.jog__ ( _arr, fn, [options], callback_ ) _//150bpm_
-* __slow.run__ ( _arr, fn, [options], callback_ ) _//180bpm_
-* __slow.heartbeat__ ( _arr, fn, [options], callback_ ) _//72bpm_
-
-
-## count-limited
-_do only a few things at a time._
-_(only go as fast as your callback does)_
-
-* __slow.steady__ ( _arr, fn, [options], callback_ )  _//max=5_
-* __slow.handful__ ( _arr, fn, [options], callback_ ) _//max=3_
-* __slow.pocket__ ( _arr, fn, [options], callback_ )  _//max=7_
-* __slow.backpack__ ( _arr, fn, [options], callback_ ) _//max=15_
-* __slow.shovel__ ( _arr, fn, [options], callback_ ) _//max=35_
-
-## the _options_ are:
-```javascript
-{
- debug: true, //understand when the requests are being fired
- verbose: true, //include the input in the results
- monitor: function(r){console.log(r.length)}, //watch the results coming in in real-time
- max: 10 //the most number of concurrent requests you're comfortable making
-}
-```
-but you can just ignore those tho
-
-## in the Browzers!
-(2.8k)
-```html
-<script src="https://raw.github.com/spencermountain/slow/master/slow.min.js"></script>
-<script>
-  slow.__walk__( [1,2,3,4,5,6,7], my_function, {max:3}, function(r){
-    alert(r.join(', '))
+//return a promise
+function random_wait(i) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve(i)
+    }, Math.random() * 3000)
   })
-  function my_function(q, callback){
-    var x=Math.floor(Math.random()*2000)
-    setTimeout(function(){callback("finished "+q+" in "+x+"ms")}, x)
-  }
+}
+slow.walk([1, 2, 3, 4, 5, 6], random_wait).then(res => {
+  console.log('done!')
+  console.log(res) //[1,2,3,4,5,6]
+})
+```
+
+or, if you prefer, as `async/await`
+
+```js
+;(async () => {
+  let res = await slow.walk(['larry', 'curly', 'moe'], random_wait)
+  // ['larry', 'curly', 'moe']
+})()
+```
+
+#### Methods:
+
+- **slow.crawl()** - max 3
+- **slow.walk()** - max 5
+- **slow.run()** - max 10
+- **slow.sprint()** - max 15
+
+`slow` can be run in the browser too, like this:
+
+```html
+<script src="https://unpkg.com/slow"></script>
+<script>
+  let urls = [
+    'https://en.wikipedia.org/wiki/New_York_Yankees',
+    'https://en.wikipedia.org/wiki/Toronto_Blue_Jays',
+    'https://en.wikipedia.org/wiki/Boston_Red_Sox'
+  ]
+  slow(urls, fetch).then(pages => {
+    console.log(pages)
+  })
 </script>
 ```
 
-## what about my craziness..
-if you're in a situation that needs fancy paramaters, wrap them up like this:
-```javascript
-slow.steady( [1,2,3,4], whatev, console.log);
-function whatev(i, callback){
-  my_craziness(param1, param2, then_finally, a, callback) //works fine
-}
-```
-or if your function returns __[errror, result]__  (i hate that)
-```javascript
-slow.steady( [1,2,3,4], whatev, console.log);
-function whatev(i, callback){
-  my_craziness(i, function(err, result){
-    callback(result||err);//la de da;)
-  })
-}
-```
-
-## license
 MIT

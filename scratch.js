@@ -1,13 +1,32 @@
 const slow = require('./src/')
 
-async function random_wait(i) {
-  return await setTimeout(() => {
-      console.log('doing ' + i)
-      return i
-    }, Math.random() * 4000);
+//return a promise
+function random_wait(i) {
+  return new Promise(resolve => {
+    console.log('start ' + i)
+    setTimeout(() => {
+      console.log('done ' + i)
+      resolve(i)
+    }, Math.random() * 6000)
+  })
 }
 
-slow.walk([1, 2, 3, 4], random_wait, (res) => {
-  console.log('done!')
+// setInterval(() => {
+//   console.log('--')
+// }, 500)
+
+// slow
+//   .crawl([1, 2, 3, 4, 5], random_wait)
+//   .then(res => {
+//     console.log('\n\n---done!---\n')
+//     console.log(res)
+//   })
+//   .catch(() => {
+//     console.log('bummer!')
+//   })
+
+;(async () => {
+  let res = await slow.walk(['larry', 'curly', 'moe'], random_wait)
+  // ['larry','curly','moe']
   console.log(res)
-})
+})()

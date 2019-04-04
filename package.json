@@ -6,6 +6,7 @@
   "description": "rate-limit an async function",
   "version": "1.0.0",
   "scripts": {
+    "test": "tape ./tests/*.test.js | tap-dancer",
     "watch": "amble ./scratch.js",
     "build": "node ./scripts/build.js"
   },
@@ -18,14 +19,16 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@babel/core": "7.3.4",
-    "@babel/preset-env": "7.3.4",
+    "@babel/core": "7.4.3",
+    "@babel/preset-env": "7.4.3",
     "amble": "0.0.7",
     "babelify": "10.0.0",
     "browserify": "^16.2.3",
     "derequire": "2.0.6",
     "shelljs": "0.8.3",
-    "terser": "3.16.1"
+    "tap-dancer": "0.1.2",
+    "tape": "4.10.1",
+    "terser": "3.17.0"
   },
   "license": "MIT"
 }
