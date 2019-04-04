@@ -4,31 +4,28 @@
   <a href="https://npmjs.org/package/slow">
     <img src="https://img.shields.io/npm/v/slow.svg?style=flat-square" />
   </a>
-  <div>
-    <code>npm install slow</code>
-  </div>
+  <div><code>npm install slow</code></div>
 </div>
 
-A simple library to let you run a function in parallel, but without going too-fast.
+Run a function in parallel, but without going too fast.
 
 Give it `an array` as input, and `a function` that returns a Promise.
 
-it tells you when it's done.
+then it tells you when it's done.
 
 useful for courteous use of a web-service, or avoiding a blown-stack.
 
 ```js
 const slow = require('slow')
 
-//return a promise
-function random_wait(i) {
+function randomWait(i) {
   return new Promise(resolve => {
     setTimeout(() => {
       resolve(i)
     }, Math.random() * 3000)
   })
 }
-slow.walk([1, 2, 3, 4, 5, 6], random_wait).then(res => {
+slow.walk([1, 2, 3, 4, 5, 6], randomWait).then(res => {
   console.log('done!')
   console.log(res) //[1,2,3,4,5,6]
 })
@@ -38,7 +35,7 @@ or, if you prefer, as `async/await`
 
 ```js
 ;(async () => {
-  let res = await slow.walk(['larry', 'curly', 'moe'], random_wait)
+  let res = await slow.walk(['larry', 'curly', 'moe'], randomWait)
   // ['larry', 'curly', 'moe']
 })()
 ```
@@ -66,4 +63,9 @@ or, if you prefer, as `async/await`
 </script>
 ```
 
-MIT
+### See also
+
+- [async/maplimit](https://caolan.github.io/async/docs.html#mapLimit)
+- [dbrockman/promise-map-limit](https://github.com/dbrockman/promise-map-limit)
+- [addaleax/promise-ratelimit](https://github.com/addaleax/promise-ratelimit)
+  MIT
