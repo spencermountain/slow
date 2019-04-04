@@ -1,33 +1,67 @@
 let test = require('tape')
-let slow = require('../')
+let slow = require('../src')
 
 ///
 ///test the process with random callback times
 ///
 
-test('async-works', function(t) {
-  let options = {
-    debug: true, //understand when the requests are being fired
-    verbose: true, //include the input in the results
-    monitor: function(r) {
-      console.log('---' + r)
-    }, //watch the results coming in in real-time
-    max: 10 //the most number of concurrent requests you're comfortable making
-  }
-
+test('promise-version', function(t) {
   let arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-
-  function random_wait(q, callback) {
-    let x = Math.floor(Math.random() * 4000)
-    setTimeout(function() {
-      callback('finished ' + q + ' in ' + x + 'ms')
-    }, x)
+  //return a promise
+  function random_wait(i) {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve(i)
+      }, Math.random() * 3000)
+    })
   }
-
-  slow.walk(arr, random_wait, options, function(result) {
-    console.log('==================')
-    console.log(JSON.stringify(result, null, 2))
-    t.ok(true, 'done')
+  slow.walk(arr, random_wait).then(function(result) {
+    t.ok(JSON.stringify(result), JSON.stringify(arr), 'got-ordered-result')
+    t.end()
   })
+})
+
+test('async-version', async function(t) {
+  let arr = [1, 2, 3, 4, 5, 6]
+  //return a promise
+  function random_wait(i) {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve(i)
+      }, Math.random() * 3000)
+    })
+  }
+  let result = await slow.walk(arr, random_wait)
+  t.ok(JSON.stringify(result), JSON.stringify(arr), 'got-ordered-result')
+  t.end()
+})
+
+test('small-array', async function(t) {
+  let arr = [2, 1]
+  //return a promise
+  function random_wait(i) {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve(i)
+      }, Math.random() * 3000)
+    })
+  }
+  let result = await slow.run(arr, random_wait)
+  t.ok(JSON.stringify(result), JSON.stringify(arr), 'got-ordered-result')
+  t.end()
+})
+
+test('empty-array', async function(t) {
+  let arr = []
+  //return a promise
+  function random_wait(i) {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve(i)
+      }, Math.random() * 3000)
+    })
+  }
+  let result = await slow.sprint(arr, random_wait)
+  t.ok(JSON.stringify(result), JSON.stringify(arr), 'got-ordered-result')
   t.end()
 })
