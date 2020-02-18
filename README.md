@@ -48,6 +48,8 @@ one bad async call will not throw the whole operation, either.
 - **slow.walk(arr, fn)** - max 5
 - **slow.run(arr, fn)** - max 10
 - **slow.sprint(arr, fn)** - max 15
+- **slow.one(arr, fn)** - max 1
+- **slow.two(arr, fn)** - max 2
 
 #### In the browser:
 

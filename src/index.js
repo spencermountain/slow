@@ -1,17 +1,33 @@
 const rate = require('./rate-limit')
 
 const methods = {
-  crawl: (arr, fn) => {
+  one: (arr, fn) => {
+    return rate(arr, fn, 1)
+  },
+  two: (arr, fn) => {
+    return rate(arr, fn, 2)
+  },
+  three: (arr, fn) => {
     return rate(arr, fn, 3)
   },
-  walk: (arr, fn) => {
+  four: (arr, fn) => {
+    return rate(arr, fn, 4)
+  },
+  five: (arr, fn) => {
     return rate(arr, fn, 5)
   },
-  run: (arr, fn) => {
+  ten: (arr, fn) => {
     return rate(arr, fn, 10)
   },
-  sprint: (arr, fn) => {
+  fifteen: (arr, fn) => {
     return rate(arr, fn, 15)
-  }
+  },
 }
+methods.serial = methods.one
+methods.linear = methods.one
+methods.crawl = methods.three
+methods.walk = methods.five
+methods.run = methods.ten
+methods.sprint = methods.fifteen
+
 module.exports = methods
