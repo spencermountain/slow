@@ -1,5 +1,5 @@
 {
-  "author": "Spencer Kelly (spencermountain)",
+  "author": "Spencer Kelly <spencermountain@gmail.com> (https://spencermountain.dev)",
   "name": "slow",
   "version": "2.0.0",
   "main": "./builds/slow.cjs",
@@ -27,10 +27,7 @@
     "types",
     "CHANGELOG.md"
   ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/spencermountain/slow.git"
-  },
+  "repository": "github:spencermountain/slow",
   "devDependencies": {
     "@rollup/plugin-terser": "^1.0.0",
     "rollup": "4.63.4",
@@ -41,7 +38,7 @@
   },
   "types": "./types/index.d.ts",
   "engines": {
-    "node": ">=15.14.0"
+    "node": ">=18"
   },
   "packageManager": "pnpm@11.5.0",
   "exports": {
