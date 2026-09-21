@@ -1,76 +1,15 @@
-import commonjs from '@rollup/plugin-commonjs'
-import json from '@rollup/plugin-json'
-import resolve from '@rollup/plugin-node-resolve'
-import { terser } from 'rollup-plugin-terser'
-import babel from 'rollup-plugin-babel'
-import sizeCheck from 'rollup-plugin-filesize-check'
-const name = 'slow'
+import { readFileSync } from 'node:fs'
+import terser from '@rollup/plugin-terser'
 
-import { version } from './package.json'
-const banner = `/* ${name} ${version} MIT */`
+const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'))
+const banner = `/* slow ${version} MIT */`
 
-export default [
-  {
-    input: 'src/index.js',
-    output: [
-      {
-        file: `builds/${name}.mjs`,
-        format: 'esm',
-        banner: banner
-      }
-    ],
-    plugins: [
-      resolve(),
-      json(),
-      commonjs(),
-      babel({
-        babelrc: false,
-        presets: ['@babel/preset-env']
-      }),
-      sizeCheck()
-    ]
-  },
-  {
-    input: 'src/index.js',
-    output: [
-      {
-        file: `builds/${name}.js`,
-        format: 'umd',
-        sourcemap: true,
-        name: 'slow',
-        banner: banner
-      }
-    ],
-    plugins: [
-      resolve(),
-      json(),
-      commonjs(),
-      babel({
-        babelrc: false,
-        presets: ['@babel/preset-env']
-      }),
-      sizeCheck()
-    ]
-  },
-  {
-    input: 'src/index.js',
-    output: [
-      {
-        file: `builds/${name}.min.js`,
-        format: 'umd',
-        name: 'slow'
-      }
-    ],
-    plugins: [
-      resolve(),
-      json(),
-      commonjs(),
-      babel({
-        babelrc: false,
-        presets: ['@babel/preset-env']
-      }),
-      terser(),
-      sizeCheck()
-    ]
-  }
-]
+export default {
+  input: 'src/index.js',
+  output: [
+    { file: 'builds/slow.mjs', format: 'esm', banner },
+    { file: 'builds/slow.cjs', format: 'cjs', exports: 'default', banner },
+    { file: 'builds/slow.js', format: 'umd', name: 'slow', banner, sourcemap: true },
+    { file: 'builds/slow.min.js', format: 'umd', name: 'slow', banner, plugins: [terser()] },
+  ],
+}

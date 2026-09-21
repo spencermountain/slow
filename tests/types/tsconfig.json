@@ -1,0 +1,4 @@
+{
+  "compilerOptions": { "module": "NodeNext", "target": "ES2022", "strict": true, "noEmit": true },
+  "include": ["*.mts", "*.cts"]
+}

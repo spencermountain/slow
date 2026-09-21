@@ -1,4 +1,4 @@
-const slow = require('./src/')
+import slow from './src/index.js'
 
 //return a promise
 function random_wait(i) {

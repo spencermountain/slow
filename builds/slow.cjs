@@ -1,4 +1,6 @@
 /* slow 1.1.0 MIT */
+'use strict';
+
 /**
  * Map promise-returning callbacks with a bounded number of active operations.
  * Callback failures become null; invalid arguments reject the operation.
@@ -77,4 +79,4 @@ methods.walk = methods.five;
 methods.run = methods.ten;
 methods.sprint = methods.fifteen;
 
-export { methods as default };
+module.exports = methods;

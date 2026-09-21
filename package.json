@@ -1,46 +1,62 @@
 {
   "author": "Spencer Kelly (spencermountain)",
   "name": "slow",
-  "main": "builds/slow.js",
+  "version": "2.0.0",
+  "main": "./builds/slow.cjs",
   "unpkg": "builds/slow.min.js",
   "module": "./builds/slow.mjs",
-  "description": "rate-limit an async function",
-  "version": "1.1.0",
+  "type": "module",
+  "description": "Map async functions with bounded concurrency",
   "scripts": {
-    "test": "tape \"./tests/**/*.test.js\" | tap-dancer  --color always",
-    "watch": "amble ./scratch.js",
-    "build": "rollup -c --silent"
+    "test": "node scripts/test.js",
+    "test:types": "tsc -p tests/types/tsconfig.json",
+    "watch": "node --watch ./scratch.js",
+    "build": "rollup -c",
+    "lint": "eslint . --max-warnings 0",
+    "check": "pnpm lint && pnpm build && pnpm test && pnpm test:types",
+    "prepack": "pnpm check"
   },
   "prettier": {
     "trailingComma": "es5",
-    "tabWidth": 2,
     "semi": false,
     "singleQuote": true,
     "printWidth": 100
   },
   "files": [
-    "builds"
-  ],
-  "eslintIgnore": [
-    "builds/*.js"
+    "builds",
+    "types",
+    "CHANGELOG.md"
   ],
   "repository": {
     "type": "git",
     "url": "https://github.com/spencermountain/slow.git"
   },
-  "dependencies": {},
   "devDependencies": {
-    "@babel/core": "7.8.4",
-    "@babel/preset-env": "7.8.4",
-    "@rollup/plugin-commonjs": "11.0.1",
-    "@rollup/plugin-json": "4.0.1",
-    "@rollup/plugin-node-resolve": "7.0.0",
-    "rollup": "1.30.1",
-    "rollup-plugin-babel": "4.3.3",
-    "rollup-plugin-filesize-check": "0.0.1",
-    "rollup-plugin-terser": "5.2.0",
-    "tap-dancer": "0.2.0",
-    "tape": "4.13.0"
+    "@rollup/plugin-terser": "^1.0.0",
+    "rollup": "4.63.4",
+    "eslint": "^10.11.0",
+    "typescript": "^5.9.3",
+    "tape": "5.10.2",
+    "tap-dancer": "0.4.0"
+  },
+  "types": "./types/index.d.ts",
+  "engines": {
+    "node": ">=15.14.0"
+  },
+  "packageManager": "pnpm@11.5.0",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./types/index.d.ts",
+        "default": "./builds/slow.mjs"
+      },
+      "require": {
+        "types": "./types/index.d.cts",
+        "default": "./builds/slow.cjs"
+      }
+    },
+    "./package.json": "./package.json",
+    "./builds/*": "./builds/*"
   },
   "license": "MIT"
 }
