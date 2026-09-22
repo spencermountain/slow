@@ -30,11 +30,11 @@
   "repository": "github:spencermountain/slow",
   "devDependencies": {
     "@rollup/plugin-terser": "^1.0.0",
-    "rollup": "4.63.4",
     "eslint": "^10.11.0",
-    "typescript": "^5.9.3",
+    "rollup": "4.63.4",
+    "tap-dancer": "0.4.0",
     "tape": "5.10.2",
-    "tap-dancer": "0.4.0"
+    "typescript": "^7.0.2"
   },
   "types": "./types/index.d.ts",
   "engines": {
