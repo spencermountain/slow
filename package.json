@@ -1,46 +1,11 @@
 {
-  "author": "Spencer Kelly <spencermountain@gmail.com> (https://spencermountain.dev)",
   "name": "slow",
   "version": "2.0.0",
-  "main": "./builds/slow.cjs",
-  "unpkg": "builds/slow.min.js",
-  "module": "./builds/slow.mjs",
-  "type": "module",
   "description": "Map async functions with bounded concurrency",
-  "scripts": {
-    "test": "node scripts/test.js",
-    "test:types": "tsc -p tests/types/tsconfig.json",
-    "watch": "node --watch ./scratch.js",
-    "build": "rollup -c",
-    "lint": "eslint . --max-warnings 0",
-    "check": "pnpm lint && pnpm build && pnpm test && pnpm test:types",
-    "prepack": "pnpm check"
-  },
-  "prettier": {
-    "trailingComma": "es5",
-    "semi": false,
-    "singleQuote": true,
-    "printWidth": 100
-  },
-  "files": [
-    "builds",
-    "types",
-    "CHANGELOG.md"
-  ],
+  "license": "MIT",
   "repository": "github:spencermountain/slow",
-  "devDependencies": {
-    "@rollup/plugin-terser": "^1.0.0",
-    "eslint": "^10.11.0",
-    "rollup": "4.63.4",
-    "tap-dancer": "0.4.0",
-    "tape": "5.10.2",
-    "typescript": "^7.0.2"
-  },
-  "types": "./types/index.d.ts",
-  "engines": {
-    "node": ">=18"
-  },
-  "packageManager": "pnpm@11.5.0",
+  "author": "Spencer Kelly <spencermountain@gmail.com> (https://spencermountain.dev)",
+  "type": "module",
   "exports": {
     ".": {
       "import": {
@@ -51,9 +16,49 @@
         "types": "./types/index.d.cts",
         "default": "./builds/slow.cjs"
       }
-    },
-    "./package.json": "./package.json",
-    "./builds/*": "./builds/*"
+    }
   },
-  "license": "MIT"
+  "keywords": [
+    "async",
+    "concurrency",
+    "map",
+    "slow"
+  ],
+  "main": "./builds/slow.cjs",
+  "module": "./builds/slow.mjs",
+  "types": "./types/index.d.cts",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "pnpm@11.5.0",
+  "scripts": {
+    "test": "node scripts/test.js",
+    "test:types": "tsc -p tests/types/tsconfig.json",
+    "watch": "node --watch ./scratch.js",
+    "build": "rollup -c",
+    "lint": "eslint . --max-warnings 0",
+    "check": "pnpm lint && pnpm build && pnpm test && pnpm test:types",
+    "prepack": "pnpm check"
+  },
+  "files": [
+    "builds",
+    "CHANGELOG.md",
+    "types"
+  ],
+  "devDependencies": {
+    "@rollup/plugin-terser": "^1.0.0",
+    "eslint": "^10.11.0",
+    "rollup": "4.63.4",
+    "tap-dancer": "0.4.0",
+    "tape": "5.10.2",
+    "typescript": "^7.0.2"
+  },
+  "unpkg": "builds/slow.min.js",
+  "prettier": {
+    "trailingComma": "es5",
+    "semi": false,
+    "singleQuote": true,
+    "printWidth": 100
+  }
 }

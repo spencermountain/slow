@@ -23,7 +23,7 @@ for (const [name, limit] of Object.entries(limits)) {
     })
     t.equal(active, limit)
     // Finish the newest operation first so completion differs from input order.
-    while (releases.size) {
+    while (releases.size > 0) {
       const n = Math.max(...releases.keys())
       releases.get(n)()
       releases.delete(n)
@@ -50,7 +50,7 @@ test('custom concurrency and default', async t => {
       releases.push(() => { resolve(n) })
     }), options)
     t.equal(releases.length, expected)
-    while (releases.length) {
+    while (releases.length > 0) {
       releases.shift()()
       await tick()
     }

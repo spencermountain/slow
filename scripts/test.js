@@ -11,7 +11,7 @@ const runner = spawn(process.execPath, [
   '--unhandled-rejections=strict',
   resolve(dirname(require.resolve('tape/package.json')), require('tape/package.json').bin),
   '--strict',
-  ...(files.length ? files : ['tests/*.test.js']),
+  ...(files.length > 0 ? files : ['tests/*.test.js']),
 ], { stdio: ['ignore', 'pipe', 'inherit'] })
 
 const reporter = new TapDance()
