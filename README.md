@@ -225,4 +225,12 @@ const fn = async function(url: string): Promise<Result>  {
 const results: (Result | null)[] = await slow(urls, fn, options)
 ```
 
+### See also
+
+- [SGrondin/bottleneck](https://github.com/SGrondin/bottleneck) - supports more-elaborate queues
+- [sindresorhus/p-map](https://github.com/sindresorhus/p-map) - concurrency-limiting
+- [sindresorhus/p-queue](https://github.com/sindresorhus/p-queue) - more concurrency controls
+- [sindresorhus/p-limit](https://github.com/sindresorhus/p-limit) - reusable limiter that can be shared
+- [sindresorhus/p-throttle](https://github.com/sindresorhus/p-throttle) - pace-limiting
+
 MIT
