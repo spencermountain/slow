@@ -10,7 +10,11 @@
   <div><code>npm install slow</code></div>
 </div>
 
-Run work in parallel, but without going too fast -
+
+<!-- spacer -->
+<img height="25px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
+
+Run work in parallel, without going too fast
 
 ```js
 import { walk } from 'slow'
@@ -26,17 +30,21 @@ const pages = await walk(urls, async url => {
 })
 ```
 
-Useful for courteous use of a web-service, or avoiding a blown-stack.
+Intended for courteous use of web-services, or doing async without a blowin a heap.
 
-Or when you don't want to write a custom `Promise.all()` thing.
+<!-- spacer -->
+<img height="15px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
 
-Sensible settings - `walk()` for example allows `<=2` concurrent, with `<=2` fires per second.
+* observe both concurrency limits, and rate limits
 
-Results stay in input order, even when operations finish out of order.
+* Results stay in input order, even when operations finish out of order
 
-Types are included, require is supported.
+* Types are included, require is supported
 
-No dependencies.
+* No dependencies
+
+<!-- spacer -->
+<img height="15px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
 
 ```js
 slow.run([1, 2, 3], async n => n * 3).then(console.log)
@@ -46,102 +54,110 @@ slow.run([1, 2, 3], async n => n * 3).then(console.log)
 <!-- spacer -->
 <img height="25px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
 
+<div align="center">
+  <img src="https://cloud.githubusercontent.com/assets/399657/23590290/ede73772-01aa-11e7-8915-181ef21027bc.png" />
+</div>
+  
 ### Combined Rate-limiting
 
-Responsible rate-limiting should observe two things - concurrency, and pace:
+Responsible rate-limiting should observe two independent things:
 
-* `concurrency` - ensure slow results do not accumulate and blow-heap
+* `concurrency` - ensure slow results do not accumulate and blowstack
 * `pace` - ensure an API is not abused, even if returns quickly
 
-These exported methods have sensible defaults for both:
+these exported methods have defaults for both:
 ```js
-// concurrency of 2 (two feet?), but different paces
-crawl(arr, fn) // 0.5 per sec
-stroll(arr, fn) // 1 per sec
-walk(arr, fn) // 2 per sec
-jog(arr, fn) // 3 per sec
-run(arr, fn) // 4 per sec
-sprint(arr, fn) // 5 per sec
+import { .... } from 'slow'
 
-// different concurrencies, but same 1s rate-limit (60bpm / adagio)
-solo(arr, fn)// one concurrent
-duet(arr, fn) // 2 concurrent
-trio(arr, fn) //3 concurrent
-quartet(arr, fn)
-quintet(arr, fn)
+// concurrency of 2, with different paces
+await crawl(arr, fn)  // only 1 per 500ms
+await stroll(arr, fn) // only 1 / second
+await walk(arr, fn)   // only 2 / second
+await jog(arr, fn)    // only 3 / second
+await run(arr, fn)    // only 4 / second
+await sprint(arr, fn) // only 5 / second
+
+// different concurrencies, with same rate-limit (1s / 60bpm / adagio)
+await solo(arr, fn)    // only 1 concurrently
+await duet(arr, fn)    // only 2 concurrently
+await trio(arr, fn)    // only 3 concurrently
+await quartet(arr, fn) // only 4 concurrently
+await quintet(arr, fn) // only 5 concurrently
 ```
 
 if you don't care about concurrency:
 ```js
-onePerSec(arr, fn) // fire blindly every second
-twoPerSec(arr, fn) // fire blindly every  500ms
-threePerSec(arr, fn) // fire blindly every 333ms...
-fourPerSec(arr, fn)
-fivePerSec(arr, fn)
+await onePerSec(arr, fn)   // fire-blindly every second
+await twoPerSec(arr, fn)   // fire-blindly every 500ms
+await threePerSec(arr, fn) // .. every 333ms
+await fourPerSec(arr, fn)  // .. every 250ms
+await fivePerSec(arr, fn)  // .. every 200ms
 ```
 
 if you dont care about rate-limmiting:
 ```js
-maxOne(arr, fn) // full-speed sync (linear/serial)
-maxTwo(arr, fn) // two-lanes, full-speed
-maxThree(arr, fn) // three-lanes, full-speed
-maxFour(arr, fn)
-maxFive(arr, fn)
+await maxOne(arr, fn)   // 1 lane, full-speed (sync/linear/serial)
+await maxTwo(arr, fn)   // 2 lanes, full-speed
+await maxThree(arr, fn) // 3 lanes, full-speed
+await maxFour(arr, fn)  // 4 lanes, full-speed
+await maxFive(arr, fn)  // 5 lanes, full-speed
 ```
+
+<!-- spacer -->
+<img height="15px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
 
 if you care dearly about both, and want to configure them closely:
 ```js
 import slow from 'slow'
 
+// (default export)
 slow(arr, fn, { concurrency: 3, pace: 2 })
 ```
-This ensures callbacks are at least 500 ms apart, with at most 3 active at once.
+Here, callbacks fire at least 500 ms apart, with at most 3 going at once.
 
-Both options are optional. Omitted or `null` options impose no limit;
-`concurrency: null` also means unrestricted concurrency. With neither limit,
-all callbacks start immediately.
+Both are optional:
+- `concurrency`: max number of simultaneus lanes `(integer | null)`
+- `pace`: max number of starts per second  `(integer | float | null)`
+- -  `0.5` means *every 2000 ms*; `2.5` means *every 400 ms*.
 
-- `concurrency`: a positive safe integer, or `null` for no limit.
-- `pace`: a positive finite number of starts per second. Fractions are supported:
-  `0.5` means one start every two seconds; `2.5` means one every 400 ms.
-  `0`, `null`, `undefined`, and `Infinity` mean no limit. 
+Omitted or null options impose no limit. 
+With neither limit, all functions fire at once.
 
-```js
-await slow.map(items, processItem, { concurrency: null, pace: 0.5 })
-```
+<!-- spacer -->
+<img height="35px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
 
-Limits apply independently to each call. Slow callbacks can overlap when pace
-allows another start and concurrency permits it. A busy event loop can delay
-starts, but does not produce catch-up bursts.
+<div align="center">
+  <img src="https://cloud.githubusercontent.com/assets/399657/23590290/ede73772-01aa-11e7-8915-181ef21027bc.png" />
+</div>
 
 ### Details
-In all cases, the first callback starts immediately.
+* In all cases, the first callback starts immediately.
 
-There is no 'debt' concept in combined-limiting. If its limited by capacity, and the next callback waits beyond its required pace limit, the waiting does not earn a burst of starts later.
+* There is no 'debt' concept in combined-limiting. If its limited by capacity, and the next callback waits beyond its required pace limit, the waiting does not earn a burst of starts later.
 
-Given limits of `0`, `null`, `undefined`, and `Infinity` all equal "no limit".
+* Given limits of `0`, `null`, `undefined`, and `Infinity` all equal "no limit".
 
-If neither pace nor concurrency have a given limit, all functions just run at full-blast.
+* If neither pace nor concurrency have a given limit, all functions just run at full-blast.
 
-`arr` must be an array and `fn` must be a function. Callbacks may return plain
-values, promises, or thenables. Values are stored directly; promises are awaited.
-`null` and `undefined` are preserved, and thrown errors or rejected promises
-produce `null` at that index. Synchronous callbacks still respect pace limits.
+* `arr` must be an array and `fn` must be a function
 
+* Synchronous callbacks still respect pace limits.
+
+* Take care not to mutate the array while processing it.
+
+
+#### Errors
+thrown errors or rejected promises produce `null` at that index:
 ```js
 await slow([1, 2, 3], n => n * 2)
 // [2, 4, 6]
 ```
 
-Take care not to mutate the array while processing it.
+* Catch the errors inside your callback if you need logging
 
-Any rejected callback throw produces `null` at that index. Other items continue.
+* Invalid arguments reject with an `Error` object.
 
-Errors are not logged automatically. Catch errors inside your callback if you need logging or a different fallback value.
-
-Invalid arguments reject with an `Error` object.
-
-A callback that never settles keeps its operation pending, and block a concurrency lane.
+* A callback that never settles keeps its operation pending, and block a concurrency lane.
 
 ```js
 const results = await slow.maxOne([1, 2, 3], async n => {
@@ -150,6 +166,8 @@ const results = await slow.maxOne([1, 2, 3], async n => {
 })
 // [1, null, 3]
 ```
+
+#### Cancel / Stop
 
 the `slow` method promise can be aborted or cancelled, by passing a signal:
 ```js
@@ -174,7 +192,10 @@ const pages = await slow(urls, async url => {
 }, { concurrency: 2, pace: 3, signal })
 ```
 
-### In the browser
+---
+
+### Usage 
+#### Client-side:
 
 ```html
 <html>
@@ -198,7 +219,7 @@ const pages = await slow(urls, async url => {
 The browser bundles expose `slow` as a global. The package also includes an ESM
 build at `builds/slow.mjs`.
 
-### TypeScript
+#### TypeScript:
 
 Input and result types are inferred from your callback. Results include `null`
 for failed or skipped items; cancelling the call rejects its promise.
@@ -225,12 +246,19 @@ const fn = async function(url: string): Promise<Result>  {
 const results: (Result | null)[] = await slow(urls, fn, options)
 ```
 
+<!-- spacer -->
+<img height="25px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
+
+<div align="center">
+  <img src="https://cloud.githubusercontent.com/assets/399657/23590290/ede73772-01aa-11e7-8915-181ef21027bc.png" />
+</div>
+
 ### See also
 
-- [SGrondin/bottleneck](https://github.com/SGrondin/bottleneck) - supports more-elaborate queues
+- [bottleneck](https://github.com/SGrondin/bottleneck) - supports more-elaborate queues
 - [sindresorhus/p-map](https://github.com/sindresorhus/p-map) - concurrency-limiting
 - [sindresorhus/p-queue](https://github.com/sindresorhus/p-queue) - more concurrency controls
-- [sindresorhus/p-limit](https://github.com/sindresorhus/p-limit) - reusable limiter that can be shared
+- [sindresorhus/p-limit](https://github.com/sindresorhus/p-limit) - reusable limiter sharing
 - [sindresorhus/p-throttle](https://github.com/sindresorhus/p-throttle) - pace-limiting
 
-MIT
+MIT, PRs welcome
