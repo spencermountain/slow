@@ -1,6 +1,6 @@
 {
   "name": "slow",
-  "version": "2.0.0",
+  "version": "1.2.0",
   "description": "Map async functions with bounded concurrency",
   "license": "MIT",
   "repository": "github:spencermountain/slow",
@@ -18,12 +18,6 @@
       }
     }
   },
-  "keywords": [
-    "async",
-    "concurrency",
-    "map",
-    "slow"
-  ],
   "main": "./builds/slow.cjs",
   "module": "./builds/slow.mjs",
   "types": "./types/index.d.cts",
@@ -37,7 +31,7 @@
     "test:types": "tsc -p tests/types/tsconfig.json",
     "watch": "node --watch ./scratch.js",
     "build": "rollup -c",
-    "lint": "eslint . --max-warnings 0",
+    "lint": "eslint .",
     "check": "pnpm lint && pnpm build && pnpm test && pnpm test:types",
     "prepack": "pnpm check"
   },
@@ -46,11 +40,17 @@
     "CHANGELOG.md",
     "types"
   ],
+  "keywords": [
+    "async",
+    "concurrency",
+    "map",
+    "slow"
+  ],
   "devDependencies": {
     "@rollup/plugin-terser": "^1.0.0",
     "eslint": "^10.11.0",
-    "rollup": "4.63.4",
-    "tap-dancer": "0.4.0",
+    "rollup": "4.63.5",
+    "tap-dancer": "0.4.3",
     "tape": "5.10.2",
     "typescript": "^7.0.2"
   },
