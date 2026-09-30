@@ -3,32 +3,37 @@
 const waitUntil = async deadline => {
   const remaining = deadline - globalThis.performance.now()
   if (remaining <= 0) return
-  await new Promise(resolve => { setTimeout(resolve, Math.ceil(remaining)) })
+  // Very small paces can exceed the timer's maximum delay; wait in chunks.
+  const delay = Math.min(Math.ceil(remaining), 2147483647)
+  await new Promise((resolve) => {
+    setTimeout(resolve, delay)
+  })
   return waitUntil(deadline)
 }
 
 /**
  * Map loop with two independent limits on active callbacks and starts per second.
- * maxFlow = maximum number of concurrent callbacks
+ * lanes = maximum number of concurrent callbacks
  * maxPace = maximum number of callbacks per second
- * Omitted limits are unrestricted. The first callback starts immediately.
+ * Omitted limits and null concurrency are unrestricted. Pace may be fractional.
+ * The first callback starts immediately.
  * Results retain input order; callback failures become null.
  */
-const rateLimit = async function (arr, fn,  maxFlow, maxPace ) {
+const rateLimit = async function (arr, fn, lanes, maxPace) {
   // Validate before processing, including when the input array is empty.
   if (!Array.isArray(arr)) throw new TypeError('Expected an array')
   if (typeof fn !== 'function') throw new TypeError('Expected a callback function')
-  if (maxFlow !== undefined && (!Number.isSafeInteger(maxFlow) || maxFlow < 1)) {
+  if (lanes != null && (!Number.isSafeInteger(lanes) || lanes < 1)) {
     throw new RangeError('Concurrency must be a positive safe integer')
   }
-  if (maxPace !== undefined && (!Number.isSafeInteger(maxPace) || maxPace < 1)) {
-    throw new RangeError('Pace must be a positive safe integer')
+  if (maxPace !== undefined && (!Number.isFinite(maxPace) || maxPace <= 0)) {
+    throw new RangeError('Pace must be a positive finite number')
   }
 
   const length = arr.length // Keep the original input length throughout the call.
   const results = new Array(length)
   const pending = []
-  const concurrencyLimit = maxFlow ?? Infinity
+  const concurrencyLimit = lanes ?? Infinity
   const intervalMs = maxPace === undefined ? 0 : 1000 / maxPace
   let activeCount = 0
   let resumeScheduler

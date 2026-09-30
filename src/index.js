@@ -1,28 +1,65 @@
 import rateLimit from './rate-limit.js'
 
-export const slow = async (arr, fn, opts = {}) => {
+export const map = async (arr, fn, opts = {}) => {
   return rateLimit(arr, fn, opts.concurrency, opts.pace)
 }
 
-const maxPace = 4
-export const serial = async (arr, fn) => rateLimit(arr, fn, 1, maxPace)
-export const linear = async (arr, fn) => rateLimit(arr, fn, 1, maxPace)
-export const walk = async (arr, fn) => rateLimit(arr, fn, 2, maxPace)
-export const run = async (arr, fn) => rateLimit(arr, fn, 3, maxPace)
-export const sprint = async (arr, fn) => rateLimit(arr, fn, 5, maxPace)
-export const crawl = async (arr, fn) => rateLimit(arr, fn, 2, 1)
-
-// concurrency limits
-export const oneX = async (arr, fn) => rateLimit(arr, fn, 1)
-export const twoX = async (arr, fn) => rateLimit(arr, fn, 2)
-export const threeX = async (arr, fn) => rateLimit(arr, fn, 3)
-export const fourX = async (arr, fn) => rateLimit(arr, fn, 4)
-export const fiveX = async (arr, fn) => rateLimit(arr, fn, 5)
+// concurrency-only limits
+export const serial = async (arr, fn) => rateLimit(arr, fn, 1)
+export const linear = async (arr, fn) => rateLimit(arr, fn, 1)
+export const maxOne = async (arr, fn) => rateLimit(arr, fn, 1)
+export const maxTwo = async (arr, fn) => rateLimit(arr, fn, 2)
+export const maxThree = async (arr, fn) => rateLimit(arr, fn, 3)
+export const maxFour = async (arr, fn) => rateLimit(arr, fn, 4)
+export const maxFive = async (arr, fn) => rateLimit(arr, fn, 5)
 
 // pace limits
-export const onePerSecond = async (arr, fn) => rateLimit(arr, fn, null, 1)
-export const twoPerSecond = async (arr, fn) => rateLimit(arr, fn, null, 2)
-export const threePerSecond = async (arr, fn) => rateLimit(arr, fn, null, 3)
-export const fourPerSecond = async (arr, fn) => rateLimit(arr, fn, null, 4)
-export const fivePerSecond = async (arr, fn) => rateLimit(arr, fn, null, 5)
+export const onePerSec = async (arr, fn) => rateLimit(arr, fn, null, 1)
+export const twoPerSec = async (arr, fn) => rateLimit(arr, fn, null, 2)
+export const threePerSec = async (arr, fn) => rateLimit(arr, fn, null, 3)
+export const fourPerSec = async (arr, fn) => rateLimit(arr, fn, null, 4)
+export const fivePerSec = async (arr, fn) => rateLimit(arr, fn, null, 5)
 
+// combined concurrency and pace limits
+// (two-feet, but different paces)
+export const crawl = async (arr, fn) => rateLimit(arr, fn, 2, 0.5)
+export const stroll = async (arr, fn) => rateLimit(arr, fn, 2, 1)
+export const walk = async (arr, fn) => rateLimit(arr, fn, 2, 2)
+export const jog = async (arr, fn) => rateLimit(arr, fn, 2, 3)
+export const run = async (arr, fn) => rateLimit(arr, fn, 2, 4)
+export const sprint = async (arr, fn) => rateLimit(arr, fn, 2, 5)
+
+// (different concurrencies, but all 60bpm/adagio)
+export const solo = async (arr, fn) => rateLimit(arr, fn, 1, 1)
+export const duet = async (arr, fn) => rateLimit(arr, fn, 2, 1)
+export const trio = async (arr, fn) => rateLimit(arr, fn, 3, 1)
+export const quartet = async (arr, fn) => rateLimit(arr, fn, 4, 1)
+
+// Named imports and the default API share the same function instances.
+const slow = {
+  map,
+  serial,
+  linear,
+  maxOne,
+  maxTwo,
+  maxThree,
+  maxFour,
+  maxFive,
+  onePerSec,
+  twoPerSec,
+  threePerSec,
+  fourPerSec,
+  fivePerSec,
+  crawl,
+  stroll,
+  walk,
+  jog,
+  run,
+  sprint,
+  solo,
+  duet,
+  trio,
+  quartet,
+}
+
+export default slow

@@ -2,8 +2,8 @@ import test from 'tape'
 import * as slow from '../src/index.js'
 
 const tick = () => new Promise(resolve => { setImmediate(resolve) })
-const limits = { oneX: 1, twoX: 2, threeX: 3, fourX: 4, fiveX: 5, tenX: 10,
-  serial: 1, linear: 1, crawl: 2 }
+const limits = { maxOne: 1, maxTwo: 2, maxThree: 3, maxFour: 4, maxFive: 5,
+  serial: 1, linear: 1 }
 
 for (const [name, limit] of Object.entries(limits)) {
   test(`${name}: bounds concurrency, fills free slots, preserves order`, async t => {
@@ -44,9 +44,9 @@ test('empty and small inputs', async t => {
 })
 
 test('custom concurrency and default', async t => {
-  for (const [options, expected] of [[{ concurrency: 7 }, 7], [undefined, 5]]) {
+  for (const [options, expected] of [[{ concurrency: 7 }, 7], [undefined, 8]]) {
     const releases = []
-    const operation = slow.mapX(Array.from({ length: 8 }, (_, i) => i), n => new Promise(resolve => {
+    const operation = slow.map(Array.from({ length: 8 }, (_, i) => i), n => new Promise(resolve => {
       releases.push(() => { resolve(n) })
     }), options)
     t.equal(releases.length, expected)
@@ -59,5 +59,5 @@ test('custom concurrency and default', async t => {
 })
 
 test('promise-like results are supported', async t => {
-  t.deepEqual(await slow.oneX([1], n => ({ then(resolve) { resolve(n) } })), [1])
+  t.deepEqual(await slow.maxOne([1], n => ({ then(resolve) { resolve(n) } })), [1])
 })

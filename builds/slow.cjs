@@ -1,123 +1,45 @@
 /* slow 2.0.0 MIT */
 'use strict';
 
-// limits the number of concurrent executions
-const activityLimit = async function (arr, fn, limit = 5) {
-  if (!Array.isArray(arr)) throw new TypeError('Expected an array')
-  if (typeof fn !== 'function') throw new TypeError('Expected a callback function')
-  if (!Number.isSafeInteger(limit) || limit < 1) {
-    throw new RangeError('Concurrency must be a positive safe integer')
-  }
-
-  const length = arr.length;
-  const results = new Array(length);
-  let next = 0;
-  let stopped = false;
-
-  async function worker() {
-    while (!stopped && next < length) {
-      const i = next++;
-      let promise;
-      let isThenable;
-      try {
-        promise = fn(arr[i]);
-        // Reading a thenable's getter can throw, just like the callback itself.
-        isThenable = promise != null && typeof promise.then === 'function';
-      } catch {
-        results[i] = null;
-        continue
-      }
-      if (!isThenable) {
-        stopped = true;
-        throw new TypeError('Callback must return a promise')
-      }
-      try {
-        results[i] = await promise;
-      } catch {
-        results[i] = null;
-      }
-    }
-  }
-
-  await Promise.all(Array.from({ length: Math.min(limit, length) }, () => worker()));
-  return results
-};
-
-// Limits callback starts per second, spaced evenly without waiting for completion.
-const paceLimit = async function (arr, fn, pace = 5) {
-  if (!Array.isArray(arr)) throw new TypeError('Expected an array')
-  if (typeof fn !== 'function') throw new TypeError('Expected a callback function')
-  if (!Number.isSafeInteger(pace) || pace < 1) {
-    throw new RangeError('Pace must be a positive safe integer')
-  }
-
-  const length = arr.length;
-  const results = new Array(length);
-  const pending = [];
-  const interval = 1000 / pace;
-  let lastStart;
-
-  for (let i = 0; i < length; i++) {
-    if (i > 0) {
-      let remaining = interval - (globalThis.performance.now() - lastStart);
-      while (remaining > 0) {
-        await new Promise(resolve => { setTimeout(resolve, Math.ceil(remaining)); });
-        remaining = interval - (globalThis.performance.now() - lastStart);
-      }
-    }
-    lastStart = globalThis.performance.now();
-    let promise;
-    let isThenable;
-    try {
-      promise = fn(arr[i]);
-      // Reading a thenable's getter can throw, just like the callback itself.
-      isThenable = promise != null && typeof promise.then === 'function';
-    } catch {
-      results[i] = null;
-      continue
-    }
-    if (!isThenable) throw new TypeError('Callback must return a promise')
-    // Handle each rejection immediately, even while later starts are waiting.
-    pending.push(Promise.resolve(promise).then(
-      value => { results[i] = value; },
-      () => { results[i] = null; }
-    ));
-  }
-
-  await Promise.all(pending);
-  return results
-};
+Object.defineProperty(exports, '__esModule', { value: true });
 
 // Use a monotonic clock so wall-clock adjustments cannot change the pace.
 // Timers can wake early; recheck after each wait before allowing another start.
 const waitUntil = async deadline => {
   const remaining = deadline - globalThis.performance.now();
   if (remaining <= 0) return
-  await new Promise(resolve => { setTimeout(resolve, Math.ceil(remaining)); });
+  // Very small paces can exceed the timer's maximum delay; wait in chunks.
+  const delay = Math.min(Math.ceil(remaining), 2147483647);
+  await new Promise((resolve) => {
+    setTimeout(resolve, delay);
+  });
   return waitUntil(deadline)
 };
 
 /**
- * Map with independent limits on active callbacks and starts per second.
- * Omitted limits are unrestricted. The first callback starts immediately.
+ * Map loop with two independent limits on active callbacks and starts per second.
+ * lanes = maximum number of concurrent callbacks
+ * maxPace = maximum number of callbacks per second
+ * Omitted limits and null concurrency are unrestricted. Pace may be fractional.
+ * The first callback starts immediately.
  * Results retain input order; callback failures become null.
  */
-const combinedLimit = async function (arr, fn, { concurrency, pace } = {}) {
+const rateLimit = async function (arr, fn, lanes, maxPace) {
   // Validate before processing, including when the input array is empty.
   if (!Array.isArray(arr)) throw new TypeError('Expected an array')
   if (typeof fn !== 'function') throw new TypeError('Expected a callback function')
-  if (concurrency !== undefined && (!Number.isSafeInteger(concurrency) || concurrency < 1)) {
+  if (lanes != null && (!Number.isSafeInteger(lanes) || lanes < 1)) {
     throw new RangeError('Concurrency must be a positive safe integer')
   }
-  if (pace !== undefined && (!Number.isSafeInteger(pace) || pace < 1)) {
-    throw new RangeError('Pace must be a positive safe integer')
+  if (maxPace !== undefined && (!Number.isFinite(maxPace) || maxPace <= 0)) {
+    throw new RangeError('Pace must be a positive finite number')
   }
 
   const length = arr.length; // Keep the original input length throughout the call.
   const results = new Array(length);
   const pending = [];
-  const concurrencyLimit = concurrency ?? Infinity;
-  const intervalMs = pace === undefined ? 0 : 1000 / pace;
+  const concurrencyLimit = lanes ?? Infinity;
+  const intervalMs = maxPace === undefined ? 0 : 1000 / maxPace;
   let activeCount = 0;
   let resumeScheduler;
   let lastStartedAt;
@@ -151,7 +73,9 @@ const combinedLimit = async function (arr, fn, { concurrency, pace } = {}) {
     if (intervalMs > 0 && index > 0) {
       await waitUntil(lastStartedAt + intervalMs);
     }
-    if (intervalMs > 0) lastStartedAt = globalThis.performance.now();
+    if (intervalMs > 0) {
+      lastStartedAt = globalThis.performance.now();
+    }
 
     let promise;
     let isThenable;
@@ -177,57 +101,89 @@ const combinedLimit = async function (arr, fn, { concurrency, pace } = {}) {
   return results
 };
 
-const map = async (arr, fn, options = {}) => combinedLimit(arr, fn, options);
-
-const mapX = async (arr, fn, { concurrency = 5 } = {}) => {
-  return activityLimit(arr, fn, concurrency)
+const map = async (arr, fn, opts = {}) => {
+  return rateLimit(arr, fn, opts.concurrency, opts.pace)
 };
 
-// concurrency limits
-const oneX = async (arr, fn) => activityLimit(arr, fn, 1);
-const twoX = async (arr, fn) => activityLimit(arr, fn, 2);
-const threeX = async (arr, fn) => activityLimit(arr, fn, 3);
-const fourX = async (arr, fn) => activityLimit(arr, fn, 4);
-const fiveX = async (arr, fn) => activityLimit(arr, fn, 5);
-const tenX = async (arr, fn) => activityLimit(arr, fn, 10);
-const serial = oneX;
-const linear = oneX;
+// concurrency-only limits
+const serial = async (arr, fn) => rateLimit(arr, fn, 1);
+const linear = async (arr, fn) => rateLimit(arr, fn, 1);
+const maxOne = async (arr, fn) => rateLimit(arr, fn, 1);
+const maxTwo = async (arr, fn) => rateLimit(arr, fn, 2);
+const maxThree = async (arr, fn) => rateLimit(arr, fn, 3);
+const maxFour = async (arr, fn) => rateLimit(arr, fn, 4);
+const maxFive = async (arr, fn) => rateLimit(arr, fn, 5);
 
-const crawl = twoX;
+// pace limits
+const onePerSec = async (arr, fn) => rateLimit(arr, fn, null, 1);
+const twoPerSec = async (arr, fn) => rateLimit(arr, fn, null, 2);
+const threePerSec = async (arr, fn) => rateLimit(arr, fn, null, 3);
+const fourPerSec = async (arr, fn) => rateLimit(arr, fn, null, 4);
+const fivePerSec = async (arr, fn) => rateLimit(arr, fn, null, 5);
 
-// evenly spaced starts per second
-const mapP = async (arr, fn, { pace = 5 } = {}) => {
-  return paceLimit(arr, fn, pace)
+// combined concurrency and pace limits
+// (two-feet, but different paces)
+const crawl = async (arr, fn) => rateLimit(arr, fn, 2, 0.5);
+const stroll = async (arr, fn) => rateLimit(arr, fn, 2, 1);
+const walk = async (arr, fn) => rateLimit(arr, fn, 2, 2);
+const jog = async (arr, fn) => rateLimit(arr, fn, 2, 3);
+const run = async (arr, fn) => rateLimit(arr, fn, 2, 4);
+const sprint = async (arr, fn) => rateLimit(arr, fn, 2, 5);
+
+// (different concurrencies, but all 60bpm/adagio)
+const solo = async (arr, fn) => rateLimit(arr, fn, 1, 1);
+const duet = async (arr, fn) => rateLimit(arr, fn, 2, 1);
+const trio = async (arr, fn) => rateLimit(arr, fn, 3, 1);
+const quartet = async (arr, fn) => rateLimit(arr, fn, 4, 1);
+
+// Named imports and the default API share the same function instances.
+const slow = {
+  map,
+  serial,
+  linear,
+  maxOne,
+  maxTwo,
+  maxThree,
+  maxFour,
+  maxFive,
+  onePerSec,
+  twoPerSec,
+  threePerSec,
+  fourPerSec,
+  fivePerSec,
+  crawl,
+  stroll,
+  walk,
+  jog,
+  run,
+  sprint,
+  solo,
+  duet,
+  trio,
+  quartet,
 };
-const oneP = async (arr, fn) => paceLimit(arr, fn, 1);
-const twoP = async (arr, fn) => paceLimit(arr, fn, 2);
-const threeP = async (arr, fn) => paceLimit(arr, fn, 3);
-const fourP = async (arr, fn) => paceLimit(arr, fn, 4);
-const fiveP = async (arr, fn) => paceLimit(arr, fn, 5);
-const tenP = async (arr, fn) => paceLimit(arr, fn, 10);
-
-const walk = twoP;
-const run = threeP;
-const sprint = fiveP;
 
 exports.crawl = crawl;
-exports.fiveP = fiveP;
-exports.fiveX = fiveX;
-exports.fourP = fourP;
-exports.fourX = fourX;
+exports.default = slow;
+exports.duet = duet;
+exports.fivePerSec = fivePerSec;
+exports.fourPerSec = fourPerSec;
+exports.jog = jog;
 exports.linear = linear;
 exports.map = map;
-exports.mapP = mapP;
-exports.mapX = mapX;
-exports.oneP = oneP;
-exports.oneX = oneX;
+exports.maxFive = maxFive;
+exports.maxFour = maxFour;
+exports.maxOne = maxOne;
+exports.maxThree = maxThree;
+exports.maxTwo = maxTwo;
+exports.onePerSec = onePerSec;
+exports.quartet = quartet;
 exports.run = run;
 exports.serial = serial;
+exports.solo = solo;
 exports.sprint = sprint;
-exports.tenP = tenP;
-exports.tenX = tenX;
-exports.threeP = threeP;
-exports.threeX = threeX;
-exports.twoP = twoP;
-exports.twoX = twoX;
+exports.stroll = stroll;
+exports.threePerSec = threePerSec;
+exports.trio = trio;
+exports.twoPerSec = twoPerSec;
 exports.walk = walk;
