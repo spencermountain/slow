@@ -104,7 +104,7 @@ all callbacks start immediately.
 - `concurrency`: a positive safe integer, or `null` for no limit.
 - `pace`: a positive finite number of starts per second. Fractions are supported:
   `0.5` means one start every two seconds; `2.5` means one every 400 ms.
-  Zero, negative values, `null`, strings, `NaN`, and infinity are invalid paces.
+  `0`, `null`, `undefined`, and `Infinity` mean no limit. 
 
 ```js
 await slow.map(items, processItem, { concurrency: null, pace: 0.5 })
@@ -154,11 +154,12 @@ const results = await slow.maxOne([1, 2, 3], async n => {
 the `slow` method promise can be aborted or cancelled, by passing a signal:
 ```js
 const controller = new AbortController()
-await slow(arr, fn, { pace: 2, signal: controller.signal })
 
 setTimeout(() => {
   controller.abort() // kill it
 }, 5000)
+
+await slow(arr, fn, { pace: 2, signal: controller.signal })
 ```
 Aborting stops new work and rejects promptly with `signal.reason`.
 
@@ -170,7 +171,7 @@ const signal = AbortSignal.timeout(5000)
 const pages = await slow(urls, async url => {
   const response = await fetch(url, { signal })
   return response.text()
-}, { concurrency: 2, pace: 3 })
+}, { concurrency: 2, pace: 3, signal })
 ```
 
 ### In the browser
@@ -178,13 +179,13 @@ const pages = await slow(urls, async url => {
 ```html
 <html>
   <script src="https://unpkg.com/slow"></script>
-  <script defer>
+  <script type="module">
     let urls = [
       'https://en.wikipedia.org/wiki/New_York_Yankees',
       'https://en.wikipedia.org/wiki/Toronto_Blue_Jays',
       'https://en.wikipedia.org/wiki/Boston_Red_Sox',
     ]
-    const pages = await walk(urls, async (url) => {
+    const pages = await slow.walk(urls, async (url) => {
       const res = await fetch(url, { method: 'HEAD' })
       return { url, modified: res.headers.get('last-modified') }
     })
@@ -216,13 +217,12 @@ interface Result {
   html: string
 }
 
-const fn = async function(url): Promise<Result>  {
+const fn = async function(url: string): Promise<Result>  {
   const response = await fetch(url)
   return { url, html: await response.text() }
 }
 
 const results: (Result | null)[] = await slow(urls, fn, options)
 ```
-
 
 MIT
