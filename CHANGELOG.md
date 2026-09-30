@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.1.0 - [Sep 2026]
+- **[change]** - build locations
+
 ## 2.0.0 - [Sep 2026]
 Major redesign of the API
 - **[breaking]** - `walk`, `run` etc are now named exports, with same api

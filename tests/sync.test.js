@@ -1,5 +1,5 @@
 import test from 'tape'
-import slow from '../src/index.js'
+import slow from './lib.js'
 
 test('synchronous callbacks preserve every kind of plain value', async t => {
   const object = { then: true }

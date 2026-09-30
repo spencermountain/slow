@@ -1,6 +1,5 @@
 import test from 'tape'
-import vm from 'node:vm'
-import { readFileSync } from 'node:fs'
+import { createIsolatedApi } from './lib.js'
 
 test('final completion waits only for unfinished tasks in a long batch', async t => {
   // Observe the promises sent to the final join. Completed tasks must not be
@@ -13,14 +12,13 @@ test('final completion waits only for unfinished tasks in a long batch', async t
       return super.all(tasks)
     }
   }
-  const context = vm.createContext({ Promise: ObservedPromise })
-  vm.runInContext(readFileSync(new URL('../builds/slow.js', import.meta.url), 'utf8'), context)
+  const api = await createIsolatedApi({ Promise: ObservedPromise })
   const input = Array.from({ length: 1000 }, (_, i) => i)
   let finishLast
   let reachedLast
   const ready = new Promise(resolve => { reachedLast = resolve })
   let settled = false
-  const operation = context.slow.map(input, n => {
+  const operation = api.map(input, n => {
     if (n === input.length - 1) {
       return new Promise(resolve => {
         finishLast = resolve

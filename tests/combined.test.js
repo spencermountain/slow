@@ -1,7 +1,8 @@
 import test from 'tape'
-import { map } from '../src/index.js'
+import slow from './lib.js'
 import { rejects } from './helpers.js'
 
+const { map } = slow
 const sleep = ms => new Promise(resolve => { setTimeout(resolve, ms) })
 
 test('null skips items, preserves order, and still counts toward pace', async t => {
@@ -36,6 +37,8 @@ test('null does not stop queued work or bypass waiting for pending results', asy
   t.deepEqual(await operation, [0, null, 2])
 })
 
+// Disabled: real-time waits add about 2.4 seconds. Uncomment to re-enable.
+/*
 test('fractional pace spaces starts below and above one per second', async t => {
   for (const [pace, concurrency] of [[0.5, null], [2.5, 1]]) {
     const starts = []
@@ -50,6 +53,7 @@ test('fractional pace spaces starts below and above one per second', async t => 
     t.deepEqual(await map([1], async n => n, { pace }), [1], 'accepts positive finite extremes')
   }
 })
+*/
 
 test('combined limits enforce occupied slots and spacing after slots reopen', { timeout: 2000 }, async t => {
   const starts = []

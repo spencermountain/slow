@@ -1,17 +1,15 @@
 import test from 'tape'
-import { readFileSync } from 'node:fs'
-import vm from 'node:vm'
+import { createIsolatedApi } from './lib.js'
 import { combinedPresets } from './api.js'
 
-const bundle = readFileSync(new URL('../builds/slow.js', import.meta.url), 'utf8')
 const flush = () => new Promise(resolve => { setImmediate(resolve) })
 
 // Isolate a clock per test without replacing the host's timers. Advancing time
 // deliberately late also tests that the limiter does not make up missed starts.
-function createClock() {
+async function createClock() {
   let now = 0
   let timers = []
-  const context = vm.createContext({
+  const api = await createIsolatedApi({
     performance: { now: () => now },
     setTimeout(callback, delay) {
       const timer = { callback, deadline: now + delay }
@@ -20,9 +18,8 @@ function createClock() {
     },
     clearTimeout(timer) { timers = timers.filter(item => item !== timer) },
   })
-  vm.runInContext(bundle, context)
   return {
-    api: context.slow,
+    api,
     now: () => now,
     async advance(ms) {
       now += ms
@@ -36,7 +33,7 @@ function createClock() {
 
 for (const [name, { concurrency, pace }] of Object.entries(combinedPresets)) {
   test(`${name}: enforces its pace and lane count together`, { timeout: 2000 }, async t => {
-    const clock = createClock()
+    const clock = await createClock()
     const interval = Math.ceil(1000 / pace)
     const input = Array.from({ length: concurrency + 2 }, (_, i) => i)
     const starts = []

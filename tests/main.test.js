@@ -1,5 +1,5 @@
 import test from 'tape'
-import * as slow from '../src/index.js'
+import slow from './lib.js'
 
 const tick = () => new Promise(resolve => { setImmediate(resolve) })
 const limits = { maxOne: 1, maxTwo: 2, maxThree: 3, maxFour: 4, maxFive: 5,

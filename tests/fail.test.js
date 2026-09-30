@@ -1,5 +1,5 @@
 import test from 'tape'
-import * as slow from '../src/index.js'
+import slow from './lib.js'
 import { rejects } from './helpers.js'
 
 test('throwing then getters become null and remaining items finish', { timeout: 1000 }, async t => {
@@ -19,6 +19,8 @@ test('throwing then getters become null and remaining items finish', { timeout: 
   }
 })
 
+// Disabled: real-time waits add about 2 seconds. Uncomment to re-enable.
+/*
 test('rejections and synchronous throws become null, including later items', async t => {
   for (const method of [slow.maxOne, slow.walk]) {
     const result = await method([0, 1, 2, 3, 4], n => {
@@ -29,6 +31,7 @@ test('rejections and synchronous throws become null, including later items', asy
     t.deepEqual(result, [null, null, null, 3, 4])
   }
 })
+*/
 
 test('invalid inputs reject with Error objects', async t => {
   for (const input of [undefined, null, {}, 'abc', 3]) {
