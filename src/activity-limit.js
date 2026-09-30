@@ -1,13 +1,5 @@
-/**
- * Map promise-returning callbacks with a bounded number of active operations.
- * Callback failures become null; invalid arguments reject the operation.
- * @template T, R
- * @param {readonly T[]} arr
- * @param {(value: T) => PromiseLike<R>} fn
- * @param {number} [limit=5]
- * @returns {Promise<(Awaited<R> | null)[]>}
- */
-export default async function rateLimit(arr, fn, limit = 5) {
+// limits the number of concurrent executions
+const activityLimit = async function (arr, fn, limit = 5) {
   if (!Array.isArray(arr)) throw new TypeError('Expected an array')
   if (typeof fn !== 'function') throw new TypeError('Expected a callback function')
   if (!Number.isSafeInteger(limit) || limit < 1) {
@@ -47,3 +39,4 @@ export default async function rateLimit(arr, fn, limit = 5) {
   await Promise.all(Array.from({ length: Math.min(limit, length) }, () => worker()))
   return results
 }
+export default activityLimit

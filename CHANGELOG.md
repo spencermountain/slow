@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.2.0 - [Sep 2026]
+## 2.0.0 - [Sep 2026]
 - **[major]** - browser builds now target modern browsers
 - **[major]** - error inputs properly throw errors
 - **[major]** - synchronous callback throws as item failures

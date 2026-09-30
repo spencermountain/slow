@@ -13,9 +13,15 @@
 Run work in parallel, but without going too fast -
 
 ```js
-import slow from 'slow'
+import * as slow from 'slow'
+import { walk } from 'slow'
 
-const pages = await slow.walk(urls, async url => {
+let urls = [
+  'https://en.wikipedia.org/wiki/New_York_Yankees',
+  'https://en.wikipedia.org/wiki/Toronto_Blue_Jays',
+  'https://en.wikipedia.org/wiki/Boston_Red_Sox'
+]
+const pages = await walk(urls, async url => {
   const response = await fetch(url)
   return response.text()
 })
@@ -23,9 +29,10 @@ const pages = await slow.walk(urls, async url => {
 
 Useful for courteous use of a web-service, or avoiding a blown-stack.
 
-Useful when you don't want to think through concurrency or wrtie a custom `Promise.all()` thing.
+Useful when you don't want to write a custom `Promise.all()` thing.
 
-`walk()` works on 5 at a tiime. `crawl()` works on 3 at a time.
+`walk()` starts 2 operations per second. `run()` starts 3 per second.
+`crawl()` works on 2 at a time.
 ```js
 slow.run([1, 2, 3], async n => n * 3).then(console.log)
 // [3, 6, 9]
@@ -42,44 +49,94 @@ Each shortcut takes `(arr, fn)`:
 
 | Maximum active operations | Methods |
 | --- | --- |
-| 1 | `one`, `serial`, `linear` |
-| 2 | `two` |
-| 3 | `three`, `crawl` |
-| 4 | `four` |
-| 5 | `five`, `walk` |
-| 10 | `ten`, `run` |
-| 15 | `fifteen`, `sprint` |
+| 1 | `oneX`, `serial`, `linear` |
+| 2 | `twoX`, `crawl` |
+| 3 | `threeX` |
+| 4 | `fourX` |
+| 5 | `fiveX` |
+| 10 | `tenX` |
 
 
 ### Notes on concurrency
 
-This is a *active tasks* limit, not a requests-per-second limit. 
-So fast operations can still produce many requests per second. 
-Use a time-based limiter if a service requires a fixed request rate.
+The `*X` methods limit active tasks, not requests per second.
+So fast operations can still produce many requests per second.
+Use the `*P` methods to limit the pace of new starts.
 
 ```js
-const opts = { concurrency: 4 } 
+const opts = { concurrency: 4 }
 const myFn = async function(item) {
   return processItem(item)
 }
-const results = await slow.map(items, myFn, opts)
+const results = await slow.mapX(items, myFn, opts)
 ```
 
-`slow.map(arr, fn, { concurrency = 5 })` starts up to `concurrency` callbacks,
+`slow.mapX(arr, fn, { concurrency = 5 })` starts up to `concurrency` callbacks,
 then starts another whenever a slot becomes free. Concurrency must be a positive
 safe integer. Limits apply independently to each call.
 
 
+### Pace limits
+
+`mapP(arr, fn, { pace = 5 })` limits starts per second, spacing them evenly.
+The first callback starts immediately; at pace 5, later callbacks start at least
+200 ms apart. Slow callbacks can overlap: pace does not cap active operations.
+Timing is best effort; a busy event loop can delay starts, without catch-up bursts.
+
+```js
+import { mapP, twoP } from 'slow'
+
+const pages = await twoP(urls, async url => {
+  const response = await fetch(url)
+  return response.text()
+})
+const results = await mapP(items, processItem, { pace: 4 })
+```
+
+The shortcuts `oneP`, `twoP`, `threeP`, `fourP`, `fiveP`, and `tenP` take
+`(arr, fn)` and start at most 1, 2, 3, 4, 5, or 10 callbacks per second.
+`walk` is an alias for `twoP` (500 ms between starts), and `run` is an alias
+for `threeP` (about 333 ms between starts). `sprint` is an alias for `fiveP`
+(5 starts per second, 200 ms between starts).
+Pace must be a positive safe integer. Each call has its own schedule, and resolves
+when all callbacks settle. Results and errors follow the same rules as activity limits.
+
+### Combining limits
+
+`map(arr, fn, { concurrency, pace })` enforces both limits together:
+
+```js
+import { map } from 'slow'
+
+const results = await map(items, processItem, { concurrency: 3, pace: 2 })
+```
+
+This starts callbacks at least 500 ms apart, with at most 3 active at once.
+If all slots are occupied, the next callback waits for a slot. Time spent waiting
+does not accumulate credit for a burst of starts.
+
+Both options are optional: an omitted or `undefined` option imposes no limit.
+With neither option, all callbacks start immediately. Supplied limits must be
+positive safe integers. Limits apply independently to each call; ordering and
+error handling match `mapX` and `mapP`.
+
 ### In the browser
 
 ```html
-<script src="https://unpkg.com/slow"></script>
-<script>
-  slow.walk(['/one', '/two'], async url => {
-    const response = await fetch(url)
-    return response.text()
-  }).then(console.log)
-</script>
+<html>
+  <script src="https://unpkg.com/slow"></script>
+  <script defer>
+    let urls = [
+      'https://en.wikipedia.org/wiki/New_York_Yankees',
+      'https://en.wikipedia.org/wiki/Toronto_Blue_Jays',
+      'https://en.wikipedia.org/wiki/Boston_Red_Sox'
+    ]
+    slow.walk(urls, fetch).then(pages => {
+      console.log(pages)
+    })
+  </script>
+</html>
+
 ```
 
 The browser bundles expose `slow` as a global. The package also includes an ESM
@@ -103,7 +160,7 @@ build at `builds/slow.mjs`.
   operation pending. Configure timeouts in your callback when needed.
 
 ```js
-const results = await slow.one([1, 2, 3], async n => {
+const results = await slow.oneX([1, 2, 3], async n => {
   if (n === 2) throw new Error('failed')
   return n
 })

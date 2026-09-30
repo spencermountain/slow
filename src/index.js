@@ -1,31 +1,36 @@
-import rateLimit from './rate-limit.js'
+import activityLimit from './activity-limit.js'
+import paceLimit from './pace-limit.js'
+import combinedLimit from './combined-limit.js'
 
-/**
- * @template T, R
- * @param {readonly T[]} arr
- * @param {(value: T) => PromiseLike<R>} fn
- * @param {{ concurrency?: number }} [options]
- * @returns {Promise<(Awaited<R> | null)[]>}
- */
-async function map(arr, fn, { concurrency = 5 } = {}) {
-  return rateLimit(arr, fn, concurrency)
+export const map = async (arr, fn, options = {}) => combinedLimit(arr, fn, options)
+
+export const mapX = async (arr, fn, { concurrency = 5 } = {}) => {
+  return activityLimit(arr, fn, concurrency)
 }
 
-const methods = {
-  map,
-  one: (arr, fn) => rateLimit(arr, fn, 1),
-  two: (arr, fn) => rateLimit(arr, fn, 2),
-  three: (arr, fn) => rateLimit(arr, fn, 3),
-  four: (arr, fn) => rateLimit(arr, fn, 4),
-  five: (arr, fn) => rateLimit(arr, fn, 5),
-  ten: (arr, fn) => rateLimit(arr, fn, 10),
-  fifteen: (arr, fn) => rateLimit(arr, fn, 15),
-}
-methods.serial = methods.one
-methods.linear = methods.one
-methods.crawl = methods.three
-methods.walk = methods.five
-methods.run = methods.ten
-methods.sprint = methods.fifteen
+// concurrency limits
+export const oneX = async (arr, fn) => activityLimit(arr, fn, 1)
+export const twoX = async (arr, fn) => activityLimit(arr, fn, 2)
+export const threeX = async (arr, fn) => activityLimit(arr, fn, 3)
+export const fourX = async (arr, fn) => activityLimit(arr, fn, 4)
+export const fiveX = async (arr, fn) => activityLimit(arr, fn, 5)
+export const tenX = async (arr, fn) => activityLimit(arr, fn, 10)
+export const serial = oneX
+export const linear = oneX
 
-export default methods
+export const crawl = twoX
+
+// evenly spaced starts per second
+export const mapP = async (arr, fn, { pace = 5 } = {}) => {
+  return paceLimit(arr, fn, pace)
+}
+export const oneP = async (arr, fn) => paceLimit(arr, fn, 1)
+export const twoP = async (arr, fn) => paceLimit(arr, fn, 2)
+export const threeP = async (arr, fn) => paceLimit(arr, fn, 3)
+export const fourP = async (arr, fn) => paceLimit(arr, fn, 4)
+export const fiveP = async (arr, fn) => paceLimit(arr, fn, 5)
+export const tenP = async (arr, fn) => paceLimit(arr, fn, 10)
+
+export const walk = twoP
+export const run = threeP
+export const sprint = fiveP

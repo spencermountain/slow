@@ -1,9 +1,9 @@
 import test from 'tape'
-import slow from '../src/index.js'
+import * as slow from '../src/index.js'
 import { rejects } from './helpers.js'
 
 test('throwing then getters become null and remaining items finish', { timeout: 1000 }, async t => {
-  for (const method of [slow.one, slow.two]) {
+  for (const method of [slow.oneX, slow.twoX]) {
     for (const failedIndex of [0, 2]) {
       const started = []
       const result = await method([0, 1, 2, 3], n => {
@@ -20,7 +20,7 @@ test('throwing then getters become null and remaining items finish', { timeout: 
 })
 
 test('rejections and synchronous throws become null, including later items', async t => {
-  for (const method of [slow.one, slow.walk]) {
+  for (const method of [slow.oneX, slow.walk]) {
     const result = await method([0, 1, 2, 3, 4], n => {
       if (n === 0 || n === 2) throw new Error('sync failure')
       if (n === 1) return Promise.reject(new Error('async failure'))
@@ -38,14 +38,14 @@ test('invalid inputs reject with Error objects', async t => {
     await rejects(t, slow.walk([], fn), TypeError)
   }
   for (const concurrency of [0, -1, 1.5, Infinity, NaN, '2', null]) {
-    await rejects(t, slow.map([], async n => n, { concurrency }), RangeError)
+    await rejects(t, slow.mapX([], async n => n, { concurrency }), RangeError)
   }
 })
 
 test('non-promise results reject at any position and stop queued work', async t => {
   for (const value of [undefined, null, 1, {}, { then: true }]) {
     const seen = []
-    await rejects(t, slow.one([0, 1, 2], n => {
+    await rejects(t, slow.oneX([0, 1, 2], n => {
       seen.push(n)
       return n === 1 ? value : Promise.resolve(n)
     }), /Callback must return a promise/)
@@ -55,7 +55,7 @@ test('non-promise results reject at any position and stop queued work', async t 
 
 test('already running callbacks remain handled after invalid return', async t => {
   let rejectPending
-  const operation = slow.two([0, 1, 2], n => {
+  const operation = slow.twoX([0, 1, 2], n => {
     if (n === 0) return new Promise((resolve, reject) => { rejectPending = reject })
     if (n === 1) return null
     t.fail('queued item must not start')
