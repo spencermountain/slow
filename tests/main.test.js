@@ -1,9 +1,9 @@
 import test from 'tape'
-import slow from '../src/index.js'
+import * as slow from '../src/index.js'
 
 const tick = () => new Promise(resolve => { setImmediate(resolve) })
-const limits = { one: 1, two: 2, three: 3, four: 4, five: 5, ten: 10, fifteen: 15,
-  serial: 1, linear: 1, crawl: 3, walk: 5, run: 10, sprint: 15 }
+const limits = { maxOne: 1, maxTwo: 2, maxThree: 3, maxFour: 4, maxFive: 5,
+  serial: 1, linear: 1 }
 
 for (const [name, limit] of Object.entries(limits)) {
   test(`${name}: bounds concurrency, fills free slots, preserves order`, async t => {
@@ -23,7 +23,7 @@ for (const [name, limit] of Object.entries(limits)) {
     })
     t.equal(active, limit)
     // Finish the newest operation first so completion differs from input order.
-    while (releases.size) {
+    while (releases.size > 0) {
       const n = Math.max(...releases.keys())
       releases.get(n)()
       releases.delete(n)
@@ -44,13 +44,13 @@ test('empty and small inputs', async t => {
 })
 
 test('custom concurrency and default', async t => {
-  for (const [options, expected] of [[{ concurrency: 7 }, 7], [undefined, 5]]) {
+  for (const [options, expected] of [[{ concurrency: 7 }, 7], [undefined, 8]]) {
     const releases = []
     const operation = slow.map(Array.from({ length: 8 }, (_, i) => i), n => new Promise(resolve => {
       releases.push(() => { resolve(n) })
     }), options)
     t.equal(releases.length, expected)
-    while (releases.length) {
+    while (releases.length > 0) {
       releases.shift()()
       await tick()
     }
@@ -59,5 +59,5 @@ test('custom concurrency and default', async t => {
 })
 
 test('promise-like results are supported', async t => {
-  t.deepEqual(await slow.one([1], n => ({ then(resolve) { resolve(n) } })), [1])
+  t.deepEqual(await slow.maxOne([1], n => ({ then(resolve) { resolve(n) } })), [1])
 })

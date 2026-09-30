@@ -1,9 +1,9 @@
 import test from 'tape'
-import slow from '../src/index.js'
+import * as slow from '../src/index.js'
 import { rejects } from './helpers.js'
 
 test('throwing then getters become null and remaining items finish', { timeout: 1000 }, async t => {
-  for (const method of [slow.one, slow.two]) {
+  for (const method of [slow.maxOne, slow.maxTwo]) {
     for (const failedIndex of [0, 2]) {
       const started = []
       const result = await method([0, 1, 2, 3], n => {
@@ -20,7 +20,7 @@ test('throwing then getters become null and remaining items finish', { timeout: 
 })
 
 test('rejections and synchronous throws become null, including later items', async t => {
-  for (const method of [slow.one, slow.walk]) {
+  for (const method of [slow.maxOne, slow.walk]) {
     const result = await method([0, 1, 2, 3, 4], n => {
       if (n === 0 || n === 2) throw new Error('sync failure')
       if (n === 1) return Promise.reject(new Error('async failure'))
@@ -37,30 +37,20 @@ test('invalid inputs reject with Error objects', async t => {
   for (const fn of [undefined, null, {}, 3]) {
     await rejects(t, slow.walk([], fn), TypeError)
   }
-  for (const concurrency of [0, -1, 1.5, Infinity, NaN, '2', null]) {
+  for (const concurrency of [-1, 1.5, -Infinity, NaN, '2']) {
     await rejects(t, slow.map([], async n => n, { concurrency }), RangeError)
   }
 })
 
-test('non-promise results reject at any position and stop queued work', async t => {
-  for (const value of [undefined, null, 1, {}, { then: true }]) {
-    const seen = []
-    await rejects(t, slow.one([0, 1, 2], n => {
-      seen.push(n)
-      return n === 1 ? value : Promise.resolve(n)
-    }), /Callback must return a promise/)
-    t.deepEqual(seen, [0, 1])
-  }
-})
-
-test('already running callbacks remain handled after invalid return', async t => {
+test('synchronous values keep queued work going while pending rejections are handled', async t => {
   let rejectPending
-  const operation = slow.two([0, 1, 2], n => {
+  const seen = []
+  const operation = slow.maxTwo([0, 1, 2], n => {
+    seen.push(n)
     if (n === 0) return new Promise((resolve, reject) => { rejectPending = reject })
-    if (n === 1) return null
-    t.fail('queued item must not start')
+    return n === 1 ? undefined : n
   })
-  await rejects(t, operation, TypeError)
+  t.deepEqual(seen, [0, 1, 2], 'synchronous values do not occupy a lane')
   rejectPending(new Error('late rejection'))
-  await new Promise(resolve => { setImmediate(resolve) })
+  t.deepEqual(await operation, [null, undefined, 2])
 })

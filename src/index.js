@@ -1,31 +1,67 @@
 import rateLimit from './rate-limit.js'
 
-/**
- * @template T, R
- * @param {readonly T[]} arr
- * @param {(value: T) => PromiseLike<R>} fn
- * @param {{ concurrency?: number }} [options]
- * @returns {Promise<(Awaited<R> | null)[]>}
- */
-async function map(arr, fn, { concurrency = 5 } = {}) {
-  return rateLimit(arr, fn, concurrency)
+export const map = async (arr, fn, opts = {}) => {
+  return rateLimit(arr, fn, opts.concurrency, opts.pace, opts.signal)
 }
 
-const methods = {
+// concurrency-only limits
+export const serial = async (arr, fn) => rateLimit(arr, fn, 1)
+export const linear = async (arr, fn) => rateLimit(arr, fn, 1)
+export const maxOne = async (arr, fn) => rateLimit(arr, fn, 1)
+export const maxTwo = async (arr, fn) => rateLimit(arr, fn, 2)
+export const maxThree = async (arr, fn) => rateLimit(arr, fn, 3)
+export const maxFour = async (arr, fn) => rateLimit(arr, fn, 4)
+export const maxFive = async (arr, fn) => rateLimit(arr, fn, 5)
+
+// pace limits
+export const onePerSec = async (arr, fn) => rateLimit(arr, fn, null, 1)
+export const twoPerSec = async (arr, fn) => rateLimit(arr, fn, null, 2)
+export const threePerSec = async (arr, fn) => rateLimit(arr, fn, null, 3)
+export const fourPerSec = async (arr, fn) => rateLimit(arr, fn, null, 4)
+export const fivePerSec = async (arr, fn) => rateLimit(arr, fn, null, 5)
+
+// combined concurrency and pace limits
+// (two-feet, but different paces)
+export const crawl = async (arr, fn) => rateLimit(arr, fn, 2, 0.5)
+export const stroll = async (arr, fn) => rateLimit(arr, fn, 2, 1)
+export const walk = async (arr, fn) => rateLimit(arr, fn, 2, 2)
+export const jog = async (arr, fn) => rateLimit(arr, fn, 2, 3)
+export const run = async (arr, fn) => rateLimit(arr, fn, 2, 4)
+export const sprint = async (arr, fn) => rateLimit(arr, fn, 2, 5)
+
+// (different concurrencies, but all 60bpm/adagio)
+export const solo = async (arr, fn) => rateLimit(arr, fn, 1, 1)
+export const duet = async (arr, fn) => rateLimit(arr, fn, 2, 1)
+export const trio = async (arr, fn) => rateLimit(arr, fn, 3, 1)
+export const quartet = async (arr, fn) => rateLimit(arr, fn, 4, 1)
+export const quintet = async (arr, fn) => rateLimit(arr, fn, 5, 1)
+
+// The default is map itself, with every named method also available on it.
+const slow = Object.assign(map, {
   map,
-  one: (arr, fn) => rateLimit(arr, fn, 1),
-  two: (arr, fn) => rateLimit(arr, fn, 2),
-  three: (arr, fn) => rateLimit(arr, fn, 3),
-  four: (arr, fn) => rateLimit(arr, fn, 4),
-  five: (arr, fn) => rateLimit(arr, fn, 5),
-  ten: (arr, fn) => rateLimit(arr, fn, 10),
-  fifteen: (arr, fn) => rateLimit(arr, fn, 15),
-}
-methods.serial = methods.one
-methods.linear = methods.one
-methods.crawl = methods.three
-methods.walk = methods.five
-methods.run = methods.ten
-methods.sprint = methods.fifteen
+  serial,
+  linear,
+  maxOne,
+  maxTwo,
+  maxThree,
+  maxFour,
+  maxFive,
+  onePerSec,
+  twoPerSec,
+  threePerSec,
+  fourPerSec,
+  fivePerSec,
+  crawl,
+  stroll,
+  walk,
+  jog,
+  run,
+  sprint,
+  solo,
+  duet,
+  trio,
+  quartet,
+  quintet,
+})
 
-export default methods
+export default slow
