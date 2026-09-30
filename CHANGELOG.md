@@ -1,12 +1,25 @@
 # Changelog
 
 ## 2.0.0 - [Sep 2026]
-- **[major]** - browser builds now target modern browsers
+Major redesign of the API
+- **[breaking]** - `walk`, `run` etc are now named exports, with same api
+- **[breaking]** - default export is now a function `slow()`
+- **[new]** - walk/run use combined concurrency and pace rate-limiting
+- **[new]** - `slow(arr, fn, { pace, concurrency })` for custom concurrency
+- **[major]** - browser builds now target modern browsers, node>=18
 - **[major]** - error inputs properly throw errors
-- **[major]** - synchronous callback throws as item failures
-- **[major]** - modern build targets
-- **[new]** - `slow.map(arr, fn, { concurrency })` for custom concurrency, defaulting to five.
-- **[new]** - TypeScript declarations for ESM and CommonJS consumers, including nullable results.
+- **[new]** - TypeScript declarations for ESM and CommonJS consumers.
 - **[new]** -  Conditional package exports for ESM and CommonJS.
 - **[fix]** - Improve unhandled rejections handling.
 - **[update]** - dependencies
+
+## 1.1.0- - [Feb 2020]
+- **[change]** - new methods
+- **[update]** - dependencies
+
+## 1.0.1 - [Apr 2019]
+- **[fix]** - main and unpkg exports
+- **[change]** - cleanup browserify, derequire
+
+## 1.0.0 - [Apr 2019]
+- **[breaking]** - promise-based rebuild of library

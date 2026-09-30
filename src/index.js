@@ -1,7 +1,7 @@
 import rateLimit from './rate-limit.js'
 
 export const map = async (arr, fn, opts = {}) => {
-  return rateLimit(arr, fn, opts.concurrency, opts.pace)
+  return rateLimit(arr, fn, opts.concurrency, opts.pace, opts.signal)
 }
 
 // concurrency-only limits
@@ -35,8 +35,8 @@ export const duet = async (arr, fn) => rateLimit(arr, fn, 2, 1)
 export const trio = async (arr, fn) => rateLimit(arr, fn, 3, 1)
 export const quartet = async (arr, fn) => rateLimit(arr, fn, 4, 1)
 
-// Named imports and the default API share the same function instances.
-const slow = {
+// The default is map itself, with every named method also available on it.
+const slow = Object.assign(map, {
   map,
   serial,
   linear,
@@ -60,6 +60,6 @@ const slow = {
   duet,
   trio,
   quartet,
-}
+})
 
 export default slow

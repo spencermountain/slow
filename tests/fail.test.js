@@ -37,30 +37,20 @@ test('invalid inputs reject with Error objects', async t => {
   for (const fn of [undefined, null, {}, 3]) {
     await rejects(t, slow.walk([], fn), TypeError)
   }
-  for (const concurrency of [0, -1, 1.5, Infinity, NaN, '2']) {
+  for (const concurrency of [-1, 1.5, -Infinity, NaN, '2']) {
     await rejects(t, slow.map([], async n => n, { concurrency }), RangeError)
   }
 })
 
-test('non-promise results reject at any position and stop queued work', async t => {
-  for (const value of [undefined, null, 1, {}, { then: true }]) {
-    const seen = []
-    await rejects(t, slow.maxOne([0, 1, 2], n => {
-      seen.push(n)
-      return n === 1 ? value : Promise.resolve(n)
-    }), /Callback must return a promise/)
-    t.deepEqual(seen, [0, 1])
-  }
-})
-
-test('already running callbacks remain handled after invalid return', async t => {
+test('synchronous values keep queued work going while pending rejections are handled', async t => {
   let rejectPending
+  const seen = []
   const operation = slow.maxTwo([0, 1, 2], n => {
+    seen.push(n)
     if (n === 0) return new Promise((resolve, reject) => { rejectPending = reject })
-    if (n === 1) return null
-    t.fail('queued item must not start')
+    return n === 1 ? undefined : n
   })
-  await rejects(t, operation, TypeError)
+  t.deepEqual(seen, [0, 1, 2], 'synchronous values do not occupy a lane')
   rejectPending(new Error('late rejection'))
-  await new Promise(resolve => { setImmediate(resolve) })
+  t.deepEqual(await operation, [null, undefined, 2])
 })

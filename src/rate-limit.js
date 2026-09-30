@@ -1,34 +1,33 @@
-// Use a monotonic clock so wall-clock adjustments cannot change the pace.
-// Timers can wake early; recheck after each wait before allowing another start.
-const waitUntil = async deadline => {
-  const remaining = deadline - globalThis.performance.now()
-  if (remaining <= 0) return
-  // Very small paces can exceed the timer's maximum delay; wait in chunks.
-  const delay = Math.min(Math.ceil(remaining), 2147483647)
-  await new Promise((resolve) => {
-    setTimeout(resolve, delay)
-  })
-  return waitUntil(deadline)
+import { waitFor, waitUntil } from './_lib.js'
+
+// Normalize only explicit unlimited values; NaN, false, and strings remain invalid.
+const normalizeLimit = (value) => {
+  return value == null || value === 0 || value === Infinity ? undefined : value
 }
 
 /**
  * Map loop with two independent limits on active callbacks and starts per second.
  * lanes = maximum number of concurrent callbacks
  * maxPace = maximum number of callbacks per second
- * Omitted limits and null concurrency are unrestricted. Pace may be fractional.
- * The first callback starts immediately.
  * Results retain input order; callback failures become null.
  */
-const rateLimit = async function (arr, fn, lanes, maxPace) {
+const rateLimit = async function (arr, fn, lanes, maxPace, signal) {
   // Validate before processing, including when the input array is empty.
-  if (!Array.isArray(arr)) throw new TypeError('Expected an array')
-  if (typeof fn !== 'function') throw new TypeError('Expected a callback function')
+  if (!Array.isArray(arr) || typeof fn !== 'function') {
+    throw new TypeError(
+      `Expected an array and a callback function, got ${typeof arr}, ${typeof fn}`
+    )
+  }
+  // normalize limits
+  lanes = normalizeLimit(lanes)
+  maxPace = normalizeLimit(maxPace)
   if (lanes != null && (!Number.isSafeInteger(lanes) || lanes < 1)) {
-    throw new RangeError('Concurrency must be a positive safe integer')
+    throw new RangeError('Concurrency must be a positive safe integer, got ' + lanes)
   }
   if (maxPace !== undefined && (!Number.isFinite(maxPace) || maxPace <= 0)) {
-    throw new RangeError('Pace must be a positive finite number')
+    throw new RangeError('Pace must be a positive finite number, got ' + maxPace)
   }
+  signal?.throwIfAborted()
 
   const length = arr.length // Keep the original input length throughout the call.
   const results = new Array(length)
@@ -38,9 +37,10 @@ const rateLimit = async function (arr, fn, lanes, maxPace) {
   let activeCount = 0
   let resumeScheduler
   let lastStartedAt
+  const context = { signal }
 
   // Observe each promise immediately and release its slot on either outcome.
-  // These handlers remain attached if a later invalid return rejects the map.
+  // These handlers stay attached if cancellation rejects the map early.
   async function collectResult(promise, index) {
     try {
       results[index] = await promise
@@ -59,40 +59,52 @@ const rateLimit = async function (arr, fn, lanes, maxPace) {
   // This is the only place that starts work. Completion handlers only free slots,
   // so there can be just one scheduler waiting for a slot at any given time.
   for (let index = 0; index < length; index++) {
+    signal?.throwIfAborted()
     if (activeCount >= concurrencyLimit) {
-      await new Promise(resolve => { resumeScheduler = resolve })
+      await waitFor(
+        new Promise((resolve) => {
+          resumeScheduler = resolve
+        }),
+        signal
+      )
     }
 
     // A free slot stays free during this wait. Measure from the actual previous
     // start, so time spent at full concurrency never earns a catch-up burst.
     if (intervalMs > 0 && index > 0) {
-      await waitUntil(lastStartedAt + intervalMs)
+      await waitUntil(lastStartedAt + intervalMs, signal)
     }
+    signal?.throwIfAborted()
     if (intervalMs > 0) {
       lastStartedAt = globalThis.performance.now()
     }
 
-    let promise
+    let value
     let isThenable
     try {
-      promise = fn(arr[index])
+      value = fn(arr[index], context)
       // Accessing a custom thenable's `then` getter can itself throw.
-      isThenable = promise != null && typeof promise.then === 'function'
+      isThenable = value != null && typeof value.then === 'function'
     } catch {
       // Failed attempts still count toward pace, but occupy no active slot.
       results[index] = null
       continue
     }
 
-    // A non-promise is an API misuse: stop launching work and reject the map.
-    // Previously started callbacks still have their failures handled above.
-    if (!isThenable) throw new TypeError('Callback must return a promise')
+    // Synchronous work is already complete. Preserve its value (including null
+    // and undefined) without occupying a lane; the start still counts for pace.
+    if (!isThenable) {
+      results[index] = value
+      continue
+    }
+
     activeCount++
-    pending.push(collectResult(promise, index))
+    pending.push(collectResult(value, index))
   }
 
   // Launching the last callback is not completion; wait for every result.
-  await Promise.all(pending)
+  await waitFor(Promise.all(pending), signal)
+  signal?.throwIfAborted()
   return results
 }
 export default rateLimit

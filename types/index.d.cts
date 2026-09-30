@@ -1,15 +1,20 @@
 export interface Options {
-  /** Maximum active callbacks. Omitted or null means unrestricted. */
+  /** Maximum active callbacks. Undefined, null, 0, and Infinity mean unrestricted. */
   concurrency?: number | null
-  /** Positive finite starts per second; fractions are supported. */
-  pace?: number
+  /** Starts per second; fractions supported. Undefined, null, 0, and Infinity mean unrestricted. */
+  pace?: number | null
+  /** Stop queued work and reject with the signal's reason when aborted. */
+  signal?: AbortSignal
+}
+export interface CallbackContext {
+  signal: AbortSignal | undefined
 }
 export type Mapper = <T, R>(
   arr: readonly T[],
-  fn: (value: T) => PromiseLike<R>
+  fn: (value: T, context: CallbackContext) => R | PromiseLike<R> | null
 ) => Promise<(Awaited<R> | null)[]>
 
-export declare function map<T, R>(arr: readonly T[], fn: (value: T) => PromiseLike<R>, options?: Options): Promise<(Awaited<R> | null)[]>
+export declare function map<T, R>(arr: readonly T[], fn: (value: T, context: CallbackContext) => R | PromiseLike<R> | null, options?: Options): Promise<(Awaited<R> | null)[]>
 export declare const serial: Mapper
 export declare const linear: Mapper
 export declare const walk: Mapper
@@ -37,7 +42,7 @@ export declare const trio: Mapper
 /** Four active callbacks, at most one start per second. */
 export declare const quartet: Mapper
 
-declare const slow: {
+declare const slow: typeof map & {
   map: typeof map
   serial: typeof serial
   linear: typeof linear

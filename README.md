@@ -28,41 +28,76 @@ const pages = await walk(urls, async url => {
 
 Useful for courteous use of a web-service, or avoiding a blown-stack.
 
-Useful when you don't want to write a custom `Promise.all()` thing.
+Or when you don't want to write a custom `Promise.all()` thing.
 
-`walk()` for example, allows `2` concurrent operations, with max `2` fires per second.
+Sensible settings - `walk()` for example allows `<=2` concurrent, with `<=2` fires per second.
 
-```js
-slow.run([1, 2, 3], async n => n * 3).then(console.log)
-// [3, 6, 9]
-```
 Results stay in input order, even when operations finish out of order.
 
 Types are included, require is supported.
 
 No dependencies.
 
+```js
+slow.run([1, 2, 3], async n => n * 3).then(console.log)
+// [3, 6, 9]
+```
+
 <!-- spacer -->
 <img height="25px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
 
+### Combined Rate-limiting
 
-### Pace and concurrency
+Responsible rate-limiting should observe two things - concurrency, and pace:
 
+* `concurrency` - ensure slow results do not accumulate and blow-heap
+* `pace` - ensure an API is not abused, even if returns quickly
+
+These exported methods have sensible defaults for both:
 ```js
-import slow, { map, walk } from 'slow'
+// concurrency of 2 (two feet?), but different paces
+crawl(arr, fn) // 0.5 per sec
+stroll(arr, fn) // 1 per sec
+walk(arr, fn) // 2 per sec
+jog(arr, fn) // 3 per sec
+run(arr, fn) // 4 per sec
+sprint(arr, fn) // 5 per sec
 
-const results = await slow.map(items, processItem, { concurrency: 3, pace: 2 })
+// different concurrencies, but same 1s rate-limit (60bpm / adagio)
+solo(arr, fn)// one concurrent
+duet(arr, fn) // 2 concurrent
+trio(arr, fn) //3 concurrent
+quartet(arr, fn)
+quintet(arr, fn)
 ```
 
-Every method is available as a named export and on the default `slow` object:
-`map === slow.map` and `walk === slow.walk`. CommonJS also supports
-`const slow = require('slow')` followed by `slow.map(...)` or `slow.walk(...)`.
+if you don't care about concurrency:
+```js
+onePerSec(arr, fn) // fire blindly every second
+twoPerSec(arr, fn) // fire blindly every  500ms
+threePerSec(arr, fn) // fire blindly every 333ms...
+fourPerSec(arr, fn)
+fivePerSec(arr, fn)
+```
 
-This starts callbacks at least 500 ms apart, with at most 3 active at once.
-The first callback starts immediately. If all slots are occupied, the next
-callback waits for a slot; waiting does not earn a burst of starts later.
+if you dont care about rate-limmiting:
+```js
+maxOne(arr, fn) // full-speed sync (linear/serial)
+maxTwo(arr, fn) // two-lanes, full-speed
+maxThree(arr, fn) // three-lanes, full-speed
+maxFour(arr, fn)
+maxFive(arr, fn)
+```
 
-Both options are optional. Omitted or `undefined` options impose no limit;
+if you care dearly about both, and want to configure them closely:
+```js
+import slow from 'slow'
+
+slow(arr, fn, { concurrency: 3, pace: 2 })
+```
+This ensures callbacks are at least 500 ms apart, with at most 3 active at once.
+
+Both options are optional. Omitted or `null` options impose no limit;
 `concurrency: null` also means unrestricted concurrency. With neither limit,
 all callbacks start immediately.
 
@@ -79,23 +114,64 @@ Limits apply independently to each call. Slow callbacks can overlap when pace
 allows another start and concurrency permits it. A busy event loop can delay
 starts, but does not produce catch-up bursts.
 
-### Shortcuts
+### Details
+In all cases, the first callback starts immediately.
 
-Each shortcut takes `(arr, fn)`:
+There is no 'debt' concept in combined-limiting. If its limited by capacity, and the next callback waits beyond its required pace limit, the waiting does not earn a burst of starts later.
 
-| Methods | Maximum active operations | Starts per second |
-| --- | --- | --- |
-| `serial`, `linear`, `maxOne` | 1 | Unrestricted |
-| `maxTwo`, `maxThree`, `maxFour`, `maxFive` | 2, 3, 4, 5 respectively | Unrestricted |
-| `onePerSec` through `fivePerSec` | Unrestricted | 1 through 5 respectively |
-| `crawl` | 2 | 0.5 |
-| `stroll` | 2 | 1 |
-| `walk` | 2 | 2 |
-| `jog` | 2 | 3 |
-| `run` | 2 | 4 |
-| `sprint` | 2 | 5 |
-| `drip` | 1 | 1 |
-| `trickle` | 1 | 2 |
+Given limits of `0`, `null`, `undefined`, and `Infinity` all equal "no limit".
+
+If neither pace nor concurrency have a given limit, all functions just run at full-blast.
+
+`arr` must be an array and `fn` must be a function. Callbacks may return plain
+values, promises, or thenables. Values are stored directly; promises are awaited.
+`null` and `undefined` are preserved, and thrown errors or rejected promises
+produce `null` at that index. Synchronous callbacks still respect pace limits.
+
+```js
+await slow([1, 2, 3], n => n * 2)
+// [2, 4, 6]
+```
+
+Take care not to mutate the array while processing it.
+
+Any rejected callback throw produces `null` at that index. Other items continue.
+
+Errors are not logged automatically. Catch errors inside your callback if you need logging or a different fallback value.
+
+Invalid arguments reject with an `Error` object.
+
+A callback that never settles keeps its operation pending, and block a concurrency lane.
+
+```js
+const results = await slow.maxOne([1, 2, 3], async n => {
+  if (n === 2) throw new Error('failed')
+  return n
+})
+// [1, null, 3]
+```
+
+the `slow` method promise can be aborted or cancelled, by passing a signal:
+```js
+const controller = new AbortController()
+await slow(arr, fn, { pace: 2, signal: controller.signal })
+
+setTimeout(() => {
+  controller.abort() // kill it
+}, 5000)
+```
+Aborting stops new work and rejects promptly with `signal.reason`.
+
+Callbacks receive `{ signal }` as their second argument; forward it your callback to stop active requests too.
+Functions that ignore the signal may keep running, but its later rejections remain handled.
+```js
+const signal = AbortSignal.timeout(5000)
+
+const pages = await slow(urls, async url => {
+  const response = await fetch(url, { signal })
+  return response.text()
+}, { concurrency: 2, pace: 3 })
+```
 
 ### In the browser
 
@@ -106,11 +182,13 @@ Each shortcut takes `(arr, fn)`:
     let urls = [
       'https://en.wikipedia.org/wiki/New_York_Yankees',
       'https://en.wikipedia.org/wiki/Toronto_Blue_Jays',
-      'https://en.wikipedia.org/wiki/Boston_Red_Sox'
+      'https://en.wikipedia.org/wiki/Boston_Red_Sox',
     ]
-    slow.walk(urls, fetch).then(pages => {
-      console.log(pages)
+    const pages = await walk(urls, async (url) => {
+      const res = await fetch(url, { method: 'HEAD' })
+      return { url, modified: res.headers.get('last-modified') }
     })
+    console.log(pages)
   </script>
 </html>
 
@@ -119,29 +197,32 @@ Each shortcut takes `(arr, fn)`:
 The browser bundles expose `slow` as a global. The package also includes an ESM
 build at `builds/slow.mjs`.
 
+### TypeScript
 
-### Results and errors
+Input and result types are inferred from your callback. Results include `null`
+for failed or skipped items; cancelling the call rejects its promise.
 
-- `arr` must be an array and `fn` must be a function returning a promise (or thenable).
-- Each callback receives one array value. Input order and the original array length
-  determine the output; do not mutate the array while processing it.
-- An empty array resolves to `[]` after argument validation.
-- A rejected callback or synchronous callback throw produces `null` at that index.
-  This includes errors thrown while reading a returned thenable's `then` property.
-  Other items continue. Errors are not logged automatically. Catch errors inside
-  your callback if you need logging or a different fallback value.
-- Invalid arguments or a callback returning a non-promise reject with an `Error`
-  object. A non-promise result stops queued work; operations already started are
-  allowed to settle and their rejections remain handled.
-- There is no cancellation or timeout. A callback that never settles keeps its
-  operation pending. Configure timeouts in your callback when needed.
+```ts
+import slow, { type Options } from 'slow'
 
-```js
-const results = await slow.maxOne([1, 2, 3], async n => {
-  if (n === 2) throw new Error('failed')
-  return n
-})
-// [1, null, 3]
+const options: Options = {
+  concurrency: 2,
+  pace: 3
+}
+const urls = ['https://example.com']
+
+interface Result {
+  url: string
+  html: string
+}
+
+const fn = async function(url): Promise<Result>  {
+  const response = await fetch(url)
+  return { url, html: await response.text() }
+}
+
+const results: (Result | null)[] = await slow(urls, fn, options)
 ```
+
 
 MIT

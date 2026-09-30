@@ -13,7 +13,12 @@ function createClock() {
   let timers = []
   const context = vm.createContext({
     performance: { now: () => now },
-    setTimeout(callback, delay) { timers.push({ callback, deadline: now + delay }) },
+    setTimeout(callback, delay) {
+      const timer = { callback, deadline: now + delay }
+      timers.push(timer)
+      return timer
+    },
+    clearTimeout(timer) { timers = timers.filter(item => item !== timer) },
   })
   vm.runInContext(bundle, context)
   return {

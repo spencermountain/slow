@@ -4,6 +4,38 @@ import { rejects } from './helpers.js'
 
 const sleep = ms => new Promise(resolve => { setTimeout(resolve, ms) })
 
+test('null skips items, preserves order, and still counts toward pace', async t => {
+  for (const options of [{}, { concurrency: 1 }, { pace: 100 }, { concurrency: 2, pace: 100 }]) {
+    const starts = []
+    const result = await map([0, 1, 2, 3, 4], n => {
+      starts.push(globalThis.performance.now())
+      return n % 2 === 0 ? null : Promise.resolve(n)
+    }, options)
+    t.deepEqual(result, [null, 1, null, 3, null])
+    t.equal(starts.length, 5, 'processes every item, including after a skip')
+    if (options.pace) {
+      for (let i = 1; i < starts.length; i++) t.ok(starts[i] - starts[i - 1] >= 9)
+    }
+  }
+  t.deepEqual(await map([0, 1, 2], () => null, { concurrency: 1 }), [null, null, null])
+})
+
+test('null does not stop queued work or bypass waiting for pending results', async t => {
+  let finish
+  let settled = false
+  const seen = []
+  const operation = map([0, 1, 2], n => {
+    seen.push(n)
+    if (n === 0) return new Promise(resolve => { finish = resolve })
+    return n === 1 ? null : Promise.resolve(n)
+  }, { concurrency: 2 }).then(result => { settled = true; return result })
+  await new Promise(resolve => { setImmediate(resolve) })
+  t.deepEqual(seen, [0, 1, 2])
+  t.notOk(settled, 'still waits for the first callback')
+  finish(0)
+  t.deepEqual(await operation, [0, null, 2])
+})
+
 test('fractional pace spaces starts below and above one per second', async t => {
   for (const [pace, concurrency] of [[0.5, null], [2.5, 1]]) {
     const starts = []
@@ -84,8 +116,10 @@ test('pace alone allows overlap without a concurrency limit', async t => {
   t.deepEqual(await operation, [0, 1, 2])
 })
 
-test('omitted limits impose no constraints', async t => {
-  for (const options of [undefined, {}, { concurrency: null }, { pace: undefined, concurrency: undefined }]) {
+test('unlimited values impose no constraints in any combination', async t => {
+  const unlimited = [undefined, null, 0, -0, Infinity]
+  const combinations = unlimited.flatMap(concurrency => unlimited.map(pace => ({ concurrency, pace })))
+  for (const options of [undefined, {}, ...combinations]) {
     const releases = []
     const operation = map([0, 1, 2], n => new Promise(resolve => {
       releases.push(() => { resolve(n) })
@@ -96,14 +130,37 @@ test('omitted limits impose no constraints', async t => {
   }
 })
 
+test('disabling one limit still enforces the other', async t => {
+  for (const unlimited of [undefined, null, 0, Infinity]) {
+    const releases = []
+    const serial = map([0, 1], n => new Promise(resolve => {
+      releases.push(() => { resolve(n) })
+    }), { concurrency: 1, pace: unlimited })
+    t.equal(releases.length, 1, 'concurrency still blocks the second callback')
+    releases[0]()
+    await new Promise(resolve => { setImmediate(resolve) })
+    t.equal(releases.length, 2)
+    releases[1]()
+    t.deepEqual(await serial, [0, 1])
+
+    const starts = []
+    const result = await map([0, 1], async n => {
+      starts.push(globalThis.performance.now())
+      return n
+    }, { concurrency: unlimited, pace: 50 })
+    t.deepEqual(result, [0, 1])
+    t.ok(starts[1] - starts[0] >= 19, 'pace still spaces the starts')
+  }
+})
+
 test('combined limits validate arguments and accept empty arrays', async t => {
   t.deepEqual(await map([], () => { t.fail('must not run') }), [])
   for (const arr of [undefined, null, {}, 'abc']) await rejects(t, map(arr, async n => n), TypeError)
   for (const fn of [undefined, null, {}, 3]) await rejects(t, map([], fn), TypeError)
   for (const name of ['pace', 'concurrency']) {
     for (const value of name === 'pace'
-      ? [null, 0, -1, Infinity, NaN, '2']
-      : [0, -1, 1.5, Infinity, NaN, '2', Number.MAX_SAFE_INTEGER + 1]) {
+      ? [-1, -Infinity, NaN, '2', '0', false, true]
+      : [-1, 1.5, -Infinity, NaN, '2', '0', false, true, Number.MAX_SAFE_INTEGER + 1]) {
       await rejects(t, map([], async n => n, { [name]: value }), RangeError)
     }
   }
@@ -120,20 +177,4 @@ test('combined limits handle failures and thenables while pacing every attempt',
   }, { concurrency: 1, pace: 100 })
   t.deepEqual(result, [null, null, null, 3])
   for (let i = 1; i < starts.length; i++) t.ok(starts[i] - starts[i - 1] >= 9)
-})
-
-test('invalid results stop queued work and pending rejections stay handled', async t => {
-  for (const value of [undefined, null, 1, {}, { then: true }]) {
-    const seen = []
-    let rejectPending
-    const operation = map([0, 1, 2], n => {
-      seen.push(n)
-      if (n === 0) return new Promise((resolve, reject) => { rejectPending = reject })
-      return value
-    }, { concurrency: 2, pace: 100 })
-    await rejects(t, operation, /Callback must return a promise/)
-    rejectPending(new Error('late rejection'))
-    await sleep(20)
-    t.deepEqual(seen, [0, 1])
-  }
 })

@@ -3,37 +3,78 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
+/* eslint-disable no-use-before-define, consistent-return */
+
+// Interrupt a wait without cancelling the underlying promise. Its handlers stay
+// attached so work that ignores cancellation can still reject safely afterward.
+const waitFor = (promise, signal) => {
+  if (!signal) {
+    return promise
+  }
+  return new Promise((resolve, reject) => {
+    const cleanup = () => signal.removeEventListener('abort', onAbort);
+    const onAbort = () => { cleanup(); reject(signal.reason); };
+    signal.addEventListener('abort', onAbort, { once: true });
+    promise.then(
+      value => { cleanup(); resolve(value); },
+      error => { cleanup(); reject(error); }
+    );
+    // Also covers an abort that happened synchronously inside a callback.
+    if (signal.aborted) {
+      onAbort();
+    }
+  })
+};
+
+
 // Use a monotonic clock so wall-clock adjustments cannot change the pace.
 // Timers can wake early; recheck after each wait before allowing another start.
-const waitUntil = async deadline => {
+const waitUntil = async (deadline, signal) => {
+  signal?.throwIfAborted();
   const remaining = deadline - globalThis.performance.now();
-  if (remaining <= 0) return
+  if (remaining <= 0) {
+    return
+  }
   // Very small paces can exceed the timer's maximum delay; wait in chunks.
   const delay = Math.min(Math.ceil(remaining), 2147483647);
-  await new Promise((resolve) => {
-    setTimeout(resolve, delay);
-  });
-  return waitUntil(deadline)
+  let timer;
+  try {
+    await waitFor(new Promise(resolve => { timer = setTimeout(resolve, delay); }), signal);
+  } finally {
+    // An aborted pacing wait must not leave a timer keeping Node alive.
+    globalThis.clearTimeout(timer);
+  }
+  return waitUntil(deadline, signal)
+};
+
+// Normalize only explicit unlimited values; NaN, false, and strings remain invalid.
+const normalizeLimit = (value) => {
+  return value == null || value === 0 || value === Infinity ? undefined : value
 };
 
 /**
  * Map loop with two independent limits on active callbacks and starts per second.
  * lanes = maximum number of concurrent callbacks
  * maxPace = maximum number of callbacks per second
- * Omitted limits and null concurrency are unrestricted. Pace may be fractional.
- * The first callback starts immediately.
  * Results retain input order; callback failures become null.
  */
-const rateLimit = async function (arr, fn, lanes, maxPace) {
+const rateLimit = async function (arr, fn, lanes, maxPace, signal) {
   // Validate before processing, including when the input array is empty.
-  if (!Array.isArray(arr)) throw new TypeError('Expected an array')
-  if (typeof fn !== 'function') throw new TypeError('Expected a callback function')
+  if (!Array.isArray(arr) || typeof fn !== 'function') {
+    throw new TypeError(
+      `Expected an array and a callback function, got ${typeof arr}, ${typeof fn}`
+    )
+  }
+  // normalize limits
+  lanes = normalizeLimit(lanes);
+  maxPace = normalizeLimit(maxPace);
   if (lanes != null && (!Number.isSafeInteger(lanes) || lanes < 1)) {
-    throw new RangeError('Concurrency must be a positive safe integer')
+    throw new RangeError('Concurrency must be a positive safe integer, got ' + lanes)
   }
   if (maxPace !== undefined && (!Number.isFinite(maxPace) || maxPace <= 0)) {
-    throw new RangeError('Pace must be a positive finite number')
+    throw new RangeError('Pace must be a positive finite number, got ' + maxPace)
   }
+  signal?.throwIfAborted();
 
   const length = arr.length; // Keep the original input length throughout the call.
   const results = new Array(length);
@@ -43,9 +84,10 @@ const rateLimit = async function (arr, fn, lanes, maxPace) {
   let activeCount = 0;
   let resumeScheduler;
   let lastStartedAt;
+  const context = { signal };
 
   // Observe each promise immediately and release its slot on either outcome.
-  // These handlers remain attached if a later invalid return rejects the map.
+  // These handlers stay attached if cancellation rejects the map early.
   async function collectResult(promise, index) {
     try {
       results[index] = await promise;
@@ -64,45 +106,57 @@ const rateLimit = async function (arr, fn, lanes, maxPace) {
   // This is the only place that starts work. Completion handlers only free slots,
   // so there can be just one scheduler waiting for a slot at any given time.
   for (let index = 0; index < length; index++) {
+    signal?.throwIfAborted();
     if (activeCount >= concurrencyLimit) {
-      await new Promise(resolve => { resumeScheduler = resolve; });
+      await waitFor(
+        new Promise((resolve) => {
+          resumeScheduler = resolve;
+        }),
+        signal
+      );
     }
 
     // A free slot stays free during this wait. Measure from the actual previous
     // start, so time spent at full concurrency never earns a catch-up burst.
     if (intervalMs > 0 && index > 0) {
-      await waitUntil(lastStartedAt + intervalMs);
+      await waitUntil(lastStartedAt + intervalMs, signal);
     }
+    signal?.throwIfAborted();
     if (intervalMs > 0) {
       lastStartedAt = globalThis.performance.now();
     }
 
-    let promise;
+    let value;
     let isThenable;
     try {
-      promise = fn(arr[index]);
+      value = fn(arr[index], context);
       // Accessing a custom thenable's `then` getter can itself throw.
-      isThenable = promise != null && typeof promise.then === 'function';
+      isThenable = value != null && typeof value.then === 'function';
     } catch {
       // Failed attempts still count toward pace, but occupy no active slot.
       results[index] = null;
       continue
     }
 
-    // A non-promise is an API misuse: stop launching work and reject the map.
-    // Previously started callbacks still have their failures handled above.
-    if (!isThenable) throw new TypeError('Callback must return a promise')
+    // Synchronous work is already complete. Preserve its value (including null
+    // and undefined) without occupying a lane; the start still counts for pace.
+    if (!isThenable) {
+      results[index] = value;
+      continue
+    }
+
     activeCount++;
-    pending.push(collectResult(promise, index));
+    pending.push(collectResult(value, index));
   }
 
   // Launching the last callback is not completion; wait for every result.
-  await Promise.all(pending);
+  await waitFor(Promise.all(pending), signal);
+  signal?.throwIfAborted();
   return results
 };
 
 const map = async (arr, fn, opts = {}) => {
-  return rateLimit(arr, fn, opts.concurrency, opts.pace)
+  return rateLimit(arr, fn, opts.concurrency, opts.pace, opts.signal)
 };
 
 // concurrency-only limits
@@ -136,8 +190,8 @@ const duet = async (arr, fn) => rateLimit(arr, fn, 2, 1);
 const trio = async (arr, fn) => rateLimit(arr, fn, 3, 1);
 const quartet = async (arr, fn) => rateLimit(arr, fn, 4, 1);
 
-// Named imports and the default API share the same function instances.
-const slow = {
+// The default is map itself, with every named method also available on it.
+const slow = Object.assign(map, {
   map,
   serial,
   linear,
@@ -161,7 +215,7 @@ const slow = {
   duet,
   trio,
   quartet,
-};
+});
 
 exports.crawl = crawl;
 exports.default = slow;

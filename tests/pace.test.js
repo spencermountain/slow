@@ -59,24 +59,8 @@ test('pace validates arguments even for empty inputs', async t => {
   for (const fn of [undefined, null, {}, 3]) {
     await rejects(t, slow.map([], fn), TypeError)
   }
-  for (const pace of [0, -1, Infinity, NaN, '2', null]) {
+  for (const pace of [-1, -Infinity, NaN, '2', '0', false, true]) {
     await rejects(t, slow.map([], async n => n, { pace }), RangeError)
-  }
-})
-
-test('invalid pace returns stop queued work and leave pending rejections handled', async t => {
-  for (const value of [undefined, null, 1, {}, { then: true }]) {
-    let rejectPending
-    const seen = []
-    const operation = slow.map([0, 1, 2], n => {
-      seen.push(n)
-      if (n === 0) return new Promise((resolve, reject) => { rejectPending = reject })
-      return value
-    }, { pace: 100 })
-    await rejects(t, operation, /Callback must return a promise/)
-    rejectPending(new Error('late rejection'))
-    await new Promise(resolve => { setTimeout(resolve, 20) })
-    t.deepEqual(seen, [0, 1])
   }
 })
 
