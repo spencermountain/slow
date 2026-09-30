@@ -10,7 +10,11 @@
   <div><code>npm install slow</code></div>
 </div>
 
-Run work in parallel, but without going too fast -
+
+<!-- spacer -->
+<img height="25px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
+
+Run work in parallel, but without going too fast
 
 ```js
 import { walk } from 'slow'
@@ -26,17 +30,21 @@ const pages = await walk(urls, async url => {
 })
 ```
 
-Useful for courteous use of a web-service, or avoiding a blown-stack.
+Intended for courteous use of web-services, or doing async without a blown-heap.
 
 Or when you don't want to write a custom `Promise.all()` thing.
 
-Sensible settings - `walk()` for example allows `<=2` concurrent, with `<=2` fires per second.
 
-Results stay in input order, even when operations finish out of order.
+<!-- spacer -->
+<img height="25px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
 
-Types are included, require is supported.
+* Sensible settings - `walk()` for example allows `<=2` concurrent, with `<=2` fires per second.
 
-No dependencies.
+* Results stay in input order, even when operations finish out of order.
+
+* Types are included, require is supported.
+
+* No dependencies.
 
 ```js
 slow.run([1, 2, 3], async n => n * 3).then(console.log)
@@ -46,11 +54,13 @@ slow.run([1, 2, 3], async n => n * 3).then(console.log)
 <!-- spacer -->
 <img height="25px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
 
+<img src="https://cloud.githubusercontent.com/assets/399657/23590290/ede73772-01aa-11e7-8915-181ef21027bc.png" />
+  
 ### Combined Rate-limiting
 
 Responsible rate-limiting should observe two things - concurrency, and pace:
 
-* `concurrency` - ensure slow results do not accumulate and blow-heap
+* `concurrency` - ensure slow results do not accumulate and blow-stack
 * `pace` - ensure an API is not abused, even if returns quickly
 
 These exported methods have sensible defaults for both:
@@ -113,6 +123,12 @@ await slow.map(items, processItem, { concurrency: null, pace: 0.5 })
 Limits apply independently to each call. Slow callbacks can overlap when pace
 allows another start and concurrency permits it. A busy event loop can delay
 starts, but does not produce catch-up bursts.
+
+<!-- spacer -->
+<img height="25px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
+
+<img src="https://cloud.githubusercontent.com/assets/399657/23590290/ede73772-01aa-11e7-8915-181ef21027bc.png" />
+  
 
 ### Details
 In all cases, the first callback starts immediately.
