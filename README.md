@@ -30,18 +30,18 @@ const pages = await walk(urls, async url => {
 })
 ```
 
-Intended for courteous use of web-services, or doing async without a blowin a heap.
+Intended for courteous use of web-services, or doing async without a blown heap.
 
 <!-- spacer -->
-<img height="15px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
+<img height="10px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
 
-* observe both concurrency limits, and rate limits
+* Respect both concurrency limits, and rate limits
 
 * Results stay in input order, even when operations finish out of order
 
 * Types are included, require is supported
 
-* No dependencies
+* 2kb, no dependencies
 
 <!-- spacer -->
 <img height="15px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
@@ -217,7 +217,7 @@ const pages = await slow(urls, async url => {
 ```
 
 The browser bundles expose `slow` as a global. The package also includes an ESM
-build at `builds/slow.mjs`.
+build at `builds/slow.js`.
 
 #### TypeScript:
 

@@ -1,8 +1,6 @@
 import test from 'tape'
 import { getEventListeners } from 'node:events'
-import { readFileSync } from 'node:fs'
-import vm from 'node:vm'
-import slow from '../src/index.js'
+import slow, { createIsolatedApi } from './lib.js'
 
 const tick = () => new Promise(resolve => { setImmediate(resolve) })
 const assertAborted = async (t, operation, signal) => {
@@ -59,15 +57,14 @@ test('abort clears the pacing timer and never starts the next callback', async t
   // Fake only the pacing timer, so a leaked timer is observable without making
   // the test process wait for a long real timeout.
   const timers = new Set()
-  const context = vm.createContext({
+  const api = await createIsolatedApi({
     performance: globalThis.performance,
     setTimeout(callback) { timers.add(callback); return callback },
     clearTimeout(timer) { timers.delete(timer) },
   })
-  vm.runInContext(readFileSync(new URL('../builds/slow.js', import.meta.url), 'utf8'), context)
   const controller = new globalThis.AbortController()
   const seen = []
-  const operation = context.slow.map([1, 2], async n => {
+  const operation = api.map([1, 2], async n => {
     seen.push(n)
     return n
   }, { pace: 0.01, signal: controller.signal })

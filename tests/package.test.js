@@ -3,13 +3,13 @@ import { createRequire } from 'node:module'
 import { readFileSync } from 'node:fs'
 import vm from 'node:vm'
 import defaultSlow, * as slow from 'slow'
-import sourceSlow, * as sourceMethods from '../src/index.js'
+import selectedSlow, { selectedMethods } from './lib.js'
 import { methods } from './api.js'
 
 const require = createRequire(import.meta.url)
 
 test('default export includes every named method with identical references', t => {
-  for (const api of [sourceMethods, slow, require('slow')]) {
+  for (const api of [selectedMethods, slow, require('slow')]) {
     const namedMethods = Object.keys(api).filter(name => name !== 'default')
     t.deepEqual(namedMethods.sort(), [...methods].sort(), 'matches the stable public API')
     t.deepEqual(Object.keys(api.default).sort(), namedMethods.sort())
@@ -17,12 +17,12 @@ test('default export includes every named method with identical references', t =
     for (const name of namedMethods) t.equal(api.default[name], api[name], name)
   }
   t.equal(defaultSlow, slow.default)
-  t.equal(sourceSlow, sourceMethods.default)
+  t.equal(selectedSlow, selectedMethods.default)
   t.end()
 })
 
 test('default export is callable with map options', async t => {
-  for (const map of [sourceSlow, defaultSlow, require('slow').default]) {
+  for (const map of [selectedSlow, defaultSlow, require('slow').default]) {
     t.deepEqual(await map([1, 2], async n => n * 2, { concurrency: 1, pace: 100 }), [2, 4])
   }
 })
@@ -41,7 +41,7 @@ for (const [name, api] of [['ESM', slow], ['ESM default', defaultSlow], ['Common
   })
 }
 
-for (const file of ['slow.js', 'slow.min.js']) {
+for (const file of ['slow.min.js']) {
   test(`${file} exposes the browser global`, async t => {
     const context = vm.createContext({ setTimeout, clearTimeout: globalThis.clearTimeout, performance: globalThis.performance })
     vm.runInContext(readFileSync(new URL(`../builds/${file}`, import.meta.url), 'utf8'), context)

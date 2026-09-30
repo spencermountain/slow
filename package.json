@@ -1,6 +1,6 @@
 {
   "name": "slow",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Run work in parallel without going too fast",
   "license": "MIT",
   "repository": "github:spencermountain/slow",
@@ -10,7 +10,7 @@
     ".": {
       "import": {
         "types": "./types/index.d.ts",
-        "default": "./builds/slow.mjs"
+        "default": "./builds/slow.js"
       },
       "require": {
         "types": "./types/index.d.cts",
@@ -19,7 +19,7 @@
     }
   },
   "main": "./builds/slow.cjs",
-  "module": "./builds/slow.mjs",
+  "module": "./builds/slow.js",
   "types": "./types/index.d.cts",
   "sideEffects": false,
   "engines": {
@@ -27,14 +27,13 @@
   },
   "packageManager": "pnpm@11.5.0",
   "scripts": {
-    "test": "node scripts/test.js",
+    "test": "tape \"./tests/**/*.test.js\" | tap-dancer",
+    "testb": "TESTENV=prod tape \"./tests/**/*.test.js\" | tap-dancer",
     "test:types": "tsc -p tests/types/tsconfig.json",
     "dev": "node ./scratch.js",
     "watch": "node --watch ./scratch.js",
     "build": "rollup -c",
-    "lint": "eslint .",
-    "check": "pnpm lint && pnpm build && pnpm test && pnpm test:types",
-    "prepack": "pnpm check"
+    "lint": "eslint ."
   },
   "files": [
     "builds",
@@ -44,13 +43,14 @@
   "keywords": [
     "async",
     "concurrency",
-    "map",
-    "slow"
+    "parallelism",
+    "rate-limiting"
   ],
   "devDependencies": {
     "@rollup/plugin-terser": "^1.0.0",
     "eslint": "^10.11.0",
     "rollup": "4.63.5",
+    "rollup-plugin-filesize-check": "^2.0.1",
     "tap-dancer": "0.4.3",
     "tape": "5.10.2",
     "typescript": "^7.0.2"

@@ -1,4 +1,4 @@
-/* slow 2.0.0 MIT */
+/* spencermounta/slow 2.1.0 MIT */
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -31,7 +31,7 @@ const waitFor = (promise, signal) => {
 // Timers can wake early; recheck after each wait before allowing another start.
 const waitUntil = async (deadline, signal) => {
   signal?.throwIfAborted();
-  const remaining = deadline - globalThis.performance.now();
+  const remaining = deadline - performance.now();
   if (remaining <= 0) {
     return
   }
@@ -42,7 +42,7 @@ const waitUntil = async (deadline, signal) => {
     await waitFor(new Promise(resolve => { timer = setTimeout(resolve, delay); }), signal);
   } finally {
     // An aborted pacing wait must not leave a timer keeping Node alive.
-    globalThis.clearTimeout(timer);
+    clearTimeout(timer);
   }
   return waitUntil(deadline, signal)
 };

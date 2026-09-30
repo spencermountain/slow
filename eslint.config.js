@@ -14,6 +14,7 @@ export default [
         setInterval: 'readonly',
         clearInterval: 'readonly',
         setImmediate: 'readonly',
+        performance: 'readonly',
         __dirname: 'readonly',
         __filename: 'readonly',
         // client-side globals
