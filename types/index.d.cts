@@ -41,6 +41,8 @@ export declare const duet: Mapper
 export declare const trio: Mapper
 /** Four active callbacks, at most one start per second. */
 export declare const quartet: Mapper
+/** Five active callbacks, at most one start per second. */
+export declare const quintet: Mapper
 
 declare const slow: typeof map & {
   map: typeof map
@@ -66,5 +68,6 @@ declare const slow: typeof map & {
   duet: typeof duet
   trio: typeof trio
   quartet: typeof quartet
+  quintet: typeof quintet
 }
 export default slow

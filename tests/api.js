@@ -4,7 +4,7 @@ export const methods = [
   'maxOne', 'maxTwo', 'maxThree', 'maxFour', 'maxFive',
   'onePerSec', 'twoPerSec', 'threePerSec', 'fourPerSec', 'fivePerSec',
   'crawl', 'stroll', 'walk', 'jog', 'run', 'sprint',
-  'solo', 'duet', 'trio', 'quartet',
+  'solo', 'duet', 'trio', 'quartet', 'quintet',
 ]
 
 export const combinedPresets = {
@@ -18,4 +18,5 @@ export const combinedPresets = {
   duet: { concurrency: 2, pace: 1 },
   trio: { concurrency: 3, pace: 1 },
   quartet: { concurrency: 4, pace: 1 },
+  quintet: { concurrency: 5, pace: 1 },
 }

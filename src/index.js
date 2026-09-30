@@ -34,6 +34,7 @@ export const solo = async (arr, fn) => rateLimit(arr, fn, 1, 1)
 export const duet = async (arr, fn) => rateLimit(arr, fn, 2, 1)
 export const trio = async (arr, fn) => rateLimit(arr, fn, 3, 1)
 export const quartet = async (arr, fn) => rateLimit(arr, fn, 4, 1)
+export const quintet = async (arr, fn) => rateLimit(arr, fn, 5, 1)
 
 // The default is map itself, with every named method also available on it.
 const slow = Object.assign(map, {
@@ -60,6 +61,7 @@ const slow = Object.assign(map, {
   duet,
   trio,
   quartet,
+  quintet,
 })
 
 export default slow

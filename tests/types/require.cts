@@ -30,8 +30,8 @@ slow.map([1], async n => n, { concurrency: null, pace: 0.5 })
 const defaultResult: Promise<(number | null)[]> = slow.default.map([1], async n => n)
 void defaultResult
 
-for (const method of [slow.solo, slow.duet, slow.trio, slow.quartet,
-  slow.default.solo, slow.default.duet, slow.default.trio, slow.default.quartet]) {
+for (const method of [slow.solo, slow.duet, slow.trio, slow.quartet, slow.quintet,
+  slow.default.solo, slow.default.duet, slow.default.trio, slow.default.quartet, slow.default.quintet]) {
   const result: Promise<(string | null)[]> = method([1, 2] as const, async n => String(n))
   void result
 }

@@ -35,6 +35,7 @@ const expectedMs = {
   duet: 3500,
   trio: 3500,
   quartet: 3500,
+  quintet: 3500,
 }
 
 const cases = [

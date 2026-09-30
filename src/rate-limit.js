@@ -31,10 +31,10 @@ const rateLimit = async function (arr, fn, lanes, maxPace, signal) {
 
   const length = arr.length // Keep the original input length throughout the call.
   const results = new Array(length)
-  const pending = []
+  // Keep only unfinished tasks; completed results live in the results array.
+  const pending = new Map()
   const concurrencyLimit = lanes ?? Infinity
   const intervalMs = maxPace === undefined ? 0 : 1000 / maxPace
-  let activeCount = 0
   let resumeScheduler
   let lastStartedAt
   const context = { signal }
@@ -47,7 +47,7 @@ const rateLimit = async function (arr, fn, lanes, maxPace, signal) {
     } catch {
       results[index] = null
     } finally {
-      activeCount--
+      pending.delete(index)
       if (resumeScheduler) {
         const resume = resumeScheduler
         resumeScheduler = undefined
@@ -60,7 +60,7 @@ const rateLimit = async function (arr, fn, lanes, maxPace, signal) {
   // so there can be just one scheduler waiting for a slot at any given time.
   for (let index = 0; index < length; index++) {
     signal?.throwIfAborted()
-    if (activeCount >= concurrencyLimit) {
+    if (pending.size >= concurrencyLimit) {
       await waitFor(
         new Promise((resolve) => {
           resumeScheduler = resolve
@@ -98,12 +98,11 @@ const rateLimit = async function (arr, fn, lanes, maxPace, signal) {
       continue
     }
 
-    activeCount++
-    pending.push(collectResult(value, index))
+    pending.set(index, collectResult(value, index))
   }
 
   // Launching the last callback is not completion; wait for every result.
-  await waitFor(Promise.all(pending), signal)
+  await waitFor(Promise.all(pending.values()), signal)
   signal?.throwIfAborted()
   return results
 }

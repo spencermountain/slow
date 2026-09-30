@@ -1,4 +1,4 @@
-import slow, { map, stroll, jog, solo, duet, trio, quartet } from 'slow'
+import slow, { map, stroll, jog, solo, duet, trio, quartet, quintet } from 'slow'
 import { type Options } from 'slow'
 const options: Options = { concurrency: 2 }
 const result: Promise<(string | null)[]> = slow.map([1, 2] as const, async n => String(n), options)
@@ -32,7 +32,7 @@ slow.map([1], async n => n, { concurrency: null, pace: 0.5 })
 
 const named: Promise<(number | null)[]> = map([1], async n => n)
 void named
-for (const method of [stroll, jog, solo, duet, trio, quartet, slow.stroll, slow.jog, slow.solo, slow.duet, slow.trio, slow.quartet]) {
+for (const method of [stroll, jog, solo, duet, trio, quartet, quintet, slow.stroll, slow.jog, slow.solo, slow.duet, slow.trio, slow.quartet, slow.quintet]) {
   const result: Promise<(number | null)[]> = method([1], async n => n)
   void result
 }

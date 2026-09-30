@@ -7,7 +7,7 @@
   <a href="https://bundlephobia.com/result?p=slow@latest">
     <img src="https://badgen.net/bundlejs/min/slow" />
   </a>
-  <div><code>npm add slow</code></div>
+  <div><code>npm install slow</code></div>
 </div>
 
 Run work in parallel, but without going too fast -

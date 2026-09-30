@@ -1,7 +1,7 @@
 {
   "name": "slow",
   "version": "2.0.0",
-  "description": "Map async functions with bounded concurrency",
+  "description": "Run work in parallel, without going too fast",
   "license": "MIT",
   "repository": "github:spencermountain/slow",
   "author": "Spencer Kelly <spencermountain@gmail.com> (https://spencermountain.dev)",
