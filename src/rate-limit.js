@@ -9,10 +9,12 @@ const waitUntil = async deadline => {
 
 /**
  * Map loop with two independent limits on active callbacks and starts per second.
+ * maxFlow = maximum number of concurrent callbacks
+ * maxPace = maximum number of callbacks per second
  * Omitted limits are unrestricted. The first callback starts immediately.
  * Results retain input order; callback failures become null.
  */
-const combinedLimit = async function (arr, fn,  maxFlow, maxPace ) {
+const rateLimit = async function (arr, fn,  maxFlow, maxPace ) {
   // Validate before processing, including when the input array is empty.
   if (!Array.isArray(arr)) throw new TypeError('Expected an array')
   if (typeof fn !== 'function') throw new TypeError('Expected a callback function')
@@ -88,4 +90,4 @@ const combinedLimit = async function (arr, fn,  maxFlow, maxPace ) {
   await Promise.all(pending)
   return results
 }
-export default combinedLimit
+export default rateLimit
