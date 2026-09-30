@@ -30,21 +30,22 @@ const pages = await walk(urls, async url => {
 })
 ```
 
-Intended for courteous use of web-services, or doing async without a blown-heap.
+Intended for courteous use of web-services, or doing async without a blownin a heap.
 
-Or when you don't want to write a custom `Promise.all()` thing.
-
-
+...or if you just don't want to write some custom `Promise.all()` thing
 <!-- spacer -->
-<img height="25px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
+<img height="15px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
 
-* Sensible settings - `walk()` for example allows `<=2` concurrent, with `<=2` fires per second.
+* `walk()` for example allows `<=2` concurrent, with `<=2` fires per second.
 
 * Results stay in input order, even when operations finish out of order.
 
 * Types are included, require is supported.
 
 * No dependencies.
+
+<!-- spacer -->
+<img height="15px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
 
 ```js
 slow.run([1, 2, 3], async n => n * 3).then(console.log)
@@ -58,46 +59,51 @@ slow.run([1, 2, 3], async n => n * 3).then(console.log)
   
 ### Combined Rate-limiting
 
-Responsible rate-limiting should observe two things - concurrency, and pace:
+Responsible rate-limiting should observe two independent things:
 
-* `concurrency` - ensure slow results do not accumulate and blow-stack
+* `concurrency` - ensure slow results do not accumulate and blowstack
 * `pace` - ensure an API is not abused, even if returns quickly
 
-These exported methods have sensible defaults for both:
+As such, these exported methods have sensible defaults for both:
 ```js
+import { .... } from 'slow'
+
 // concurrency of 2 (two feet?), but different paces
-crawl(arr, fn) // 0.5 per sec
-stroll(arr, fn) // 1 per sec
-walk(arr, fn) // 2 per sec
-jog(arr, fn) // 3 per sec
-run(arr, fn) // 4 per sec
-sprint(arr, fn) // 5 per sec
+crawl(arr, fn)  // <= 1 per 500ms
+stroll(arr, fn) // <= 1 / second
+walk(arr, fn)   // <= 2 / second
+jog(arr, fn)    // <= 3 / second
+run(arr, fn)    // <= 4 / second
+sprint(arr, fn) // <= 5 / second
 
 // different concurrencies, but same 1s rate-limit (60bpm / adagio)
-solo(arr, fn)// one concurrent
-duet(arr, fn) // 2 concurrent
-trio(arr, fn) //3 concurrent
-quartet(arr, fn)
-quintet(arr, fn)
+solo(arr, fn)    // <= 1 concurrently
+duet(arr, fn)    // <= 2 concurrently
+trio(arr, fn)    // <= 3 concurrently
+quartet(arr, fn) // <= 4 concurrently
+quintet(arr, fn) // <= 5 concurrently
 ```
 
 if you don't care about concurrency:
 ```js
-onePerSec(arr, fn) // fire blindly every second
-twoPerSec(arr, fn) // fire blindly every  500ms
-threePerSec(arr, fn) // fire blindly every 333ms...
-fourPerSec(arr, fn)
-fivePerSec(arr, fn)
+onePerSec(arr, fn)   // fire blindly every sec
+twoPerSec(arr, fn)   // fire blindly every  500ms
+threePerSec(arr, fn) // fire blindly every 333ms
+fourPerSec(arr, fn)  // fire blindly every 250ms
+fivePerSec(arr, fn)  // fire blindly every 200ms
 ```
 
 if you dont care about rate-limmiting:
 ```js
-maxOne(arr, fn) // full-speed sync (linear/serial)
-maxTwo(arr, fn) // two-lanes, full-speed
-maxThree(arr, fn) // three-lanes, full-speed
-maxFour(arr, fn)
-maxFive(arr, fn)
+maxOne(arr, fn)   // 1-lane, full-speed (sync/linear/serial)
+maxTwo(arr, fn)   // 2-lanes, full-speed
+maxThree(arr, fn) // 3-lanes, full-speed
+maxFour(arr, fn)  // 4-lanes, full-speed
+maxFive(arr, fn)  // 5-lanes, full-speed
 ```
+
+<!-- spacer -->
+<img height="15px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
 
 if you care dearly about both, and want to configure them closely:
 ```js
@@ -105,24 +111,14 @@ import slow from 'slow'
 
 slow(arr, fn, { concurrency: 3, pace: 2 })
 ```
-This ensures callbacks are at least 500 ms apart, with at most 3 active at once.
+In this example callbacks are at least 500 ms apart, with at most 3 active at once.
 
-Both options are optional. Omitted or `null` options impose no limit;
-`concurrency: null` also means unrestricted concurrency. With neither limit,
-all callbacks start immediately.
+Both options are optional:
+- `concurrency`: (lanes) a positive integer, or `null` for no limit
+- `pace`: max number of starts per second. Fractions are supported:
+- -  `0.5` means one start every two seconds; `2.5` means one every 400 ms.
 
-- `concurrency`: a positive safe integer, or `null` for no limit.
-- `pace`: a positive finite number of starts per second. Fractions are supported:
-  `0.5` means one start every two seconds; `2.5` means one every 400 ms.
-  `0`, `null`, `undefined`, and `Infinity` mean no limit. 
-
-```js
-await slow.map(items, processItem, { concurrency: null, pace: 0.5 })
-```
-
-Limits apply independently to each call. Slow callbacks can overlap when pace
-allows another start and concurrency permits it. A busy event loop can delay
-starts, but does not produce catch-up bursts.
+Omitted or `null` options impose no limit. With neither limit, all functions fire at once.
 
 <!-- spacer -->
 <img height="25px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
